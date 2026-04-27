@@ -1,0 +1,31 @@
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE CONSULTORIA EM ANALYTICS
+
+PARTES:
+NovaLex Serviços Corporativos LTDA, doravante denominada CONTRATANTE.
+Orbit Analytics Consultoria LTDA, doravante denominada CONTRATADA.
+
+OBJETO:
+Prestação de serviços de consultoria para estruturação de indicadores gerenciais, desenho de dashboards executivos e revisão do processo de consolidação de dados operacionais.
+
+VIGÊNCIA:
+O presente contrato terá vigência de 6 (seis) meses, com início em 01/05/2026 e término em 31/10/2026.
+
+RENOVAÇÃO:
+A renovação poderá ocorrer mediante aditivo contratual firmado entre as partes.
+
+RESCISÃO:
+O contrato poderá ser rescindido mediante aviso prévio de 15 (quinze) dias, sem multa, desde que as entregas em andamento sejam formalmente encerradas.
+
+MULTA:
+Não há multa contratual expressa para rescisão antecipada.
+
+CONFIDENCIALIDADE:
+A contratada deverá manter sigilo sobre documentos internos, indicadores, bases analíticas e materiais estratégicos acessados durante a execução do projeto.
+
+DADOS PESSOAIS:
+Não há previsão de tratamento de dados pessoais como atividade central do objeto contratual, embora as partes devam observar as normas internas de segurança da informação.
+
+OBRIGAÇÕES PRINCIPAIS:
+1. Entregar diagnóstico dos indicadores atuais.
+2. Propor modelo de dashboard executivo.
+3. Documentar recomendações de melhoria no fluxo de dados.

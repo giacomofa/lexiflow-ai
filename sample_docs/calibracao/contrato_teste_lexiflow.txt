@@ -1,0 +1,31 @@
+CONTRATO DE PRESTACAO DE SERVICOS DE TI
+
+PARTES:
+NovaLex Servicos Corporativos LTDA, doravante denominada CONTRATANTE.
+AlphaTech Solucoes em TI LTDA, doravante denominada CONTRATADA.
+
+OBJETO:
+Prestacao de servicos de monitoramento de infraestrutura, suporte tecnico e manutencao preventiva de sistemas.
+
+VIGENCIA:
+O presente contrato tera vigencia de 12 (doze) meses, com inicio em 01/01/2026 e termino em 31/12/2026.
+
+RENOVACAO:
+A renovacao podera ocorrer mediante acordo expresso entre as partes.
+
+RESCISAO:
+O contrato podera ser rescindido por qualquer das partes mediante aviso previo de 30 (trinta) dias.
+
+MULTA:
+Em caso de rescisao antecipada sem justa causa, incidirá multa equivalente a 20% do valor remanescente do contrato.
+
+CONFIDENCIALIDADE:
+As partes comprometem-se a manter sigilo sobre todas as informacoes tecnicas, operacionais e comerciais acessadas durante a execucao dos servicos.
+
+DADOS PESSOAIS:
+A CONTRATADA podera tratar dados pessoais de clientes da CONTRATANTE exclusivamente para execucao dos servicos contratados, devendo observar as regras de seguranca da informacao e a legislacao aplicavel.
+
+OBRIGACOES PRINCIPAIS:
+1. Prestar suporte tecnico conforme SLA acordado.
+2. Garantir confidencialidade das informacoes acessadas.
+3. Cumprir normas internas de seguranca da informacao.
