@@ -307,12 +307,12 @@ def render_history_page():
                 st.write("**Resposta:**")
                 st.write(qa_result["answer"])
 
-                st.write("**Evidências encontradas:**")
                 if qa_result["evidence"]:
+                    st.write("**Evidências encontradas:**")
                     for evidence in qa_result["evidence"]:
                         st.write(f"- {evidence}")
                 else:
-                    st.write("Nenhum trecho relevante foi encontrado.")
+                    st.write("**Evidências:** Nenhum trecho relevante foi encontrado.")
             else:
                 st.warning("Digite uma pergunta antes de continuar.")
 

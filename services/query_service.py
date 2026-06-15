@@ -226,7 +226,21 @@ def answer_question_from_document(
 
     llm_answer = clean_llm_answer(llm_answer)
 
-    evidence = [shorten_evidence(item["text"]) for item in relevant_chunks[:2]]
+    negative_markers = (
+        "não foi identificada",
+        "não foi identificado",
+        "não identifiquei",
+        "não foi encontrada",
+        "não foi encontrado",
+        "não está presente",
+        "não consta no documento",
+        "não foi possível identificar",
+    )
+
+    if any(marker in llm_answer.lower() for marker in negative_markers):
+        evidence = []
+    else:
+        evidence = [shorten_evidence(item["text"]) for item in relevant_chunks[:2]]
 
     return {
         "answer": llm_answer,
