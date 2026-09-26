@@ -57,6 +57,22 @@ def annotate_grounding(snippets: list[str], source_text: str) -> list[dict]:
     return [check_snippet_grounding(snippet, source_text) for snippet in (snippets or [])]
 
 
+def compute_field_confidence(fields: dict[str, str | None], source_text: str) -> dict[str, dict]:
+    """Para cada campo de texto extraído pelo LLM (ex.: penalty_clause,
+    termination_clause), verifica se o valor citado aparece de fato no
+    documento original, reaproveitando a mesma lógica de grounding usada
+    para os source_snippets. Campos vazios/nulos são omitidos (não há o
+    que verificar)."""
+    confidence = {}
+
+    for field_name, value in fields.items():
+        if not value or not isinstance(value, str):
+            continue
+        confidence[field_name] = check_snippet_grounding(value, source_text)
+
+    return confidence
+
+
 def grounding_summary(snippets: list[str], source_text: str) -> dict:
     results = annotate_grounding(snippets, source_text)
     total = len(results)

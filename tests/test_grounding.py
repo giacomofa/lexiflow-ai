@@ -1,6 +1,6 @@
 import unittest
 
-from services.grounding import check_snippet_grounding, grounding_summary
+from services.grounding import check_snippet_grounding, compute_field_confidence, grounding_summary
 
 
 class CheckSnippetGroundingTests(unittest.TestCase):
@@ -61,6 +61,46 @@ class GroundingSummaryTests(unittest.TestCase):
         self.assertEqual(summary["total"], 0)
         self.assertEqual(summary["grounded_count"], 0)
         self.assertEqual(summary["ungrounded_count"], 0)
+
+
+class ComputeFieldConfidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.source_text = (
+            "MULTA: Em caso de rescisao antecipada sem justa causa, incidira multa de 20%. "
+            "CONFIDENCIALIDADE: As partes devem manter sigilo sobre as informacoes trocadas."
+        )
+
+    def test_field_grounded_in_source_gets_high_score(self):
+        fields = {"penalty_clause": "incidira multa de 20%"}
+
+        confidence = compute_field_confidence(fields, self.source_text)
+
+        self.assertTrue(confidence["penalty_clause"]["grounded"])
+
+    def test_fabricated_field_value_gets_low_confidence(self):
+        """Regressão: o LLM pode preencher um campo com um valor plausível mas
+        que não está de fato no texto original; isso deve ficar visível."""
+        fields = {"penalty_clause": "multa de 500% sobre o valor total do contrato"}
+
+        confidence = compute_field_confidence(fields, self.source_text)
+
+        self.assertFalse(confidence["penalty_clause"]["grounded"])
+
+    def test_none_and_empty_fields_are_omitted(self):
+        fields = {"penalty_clause": None, "termination_clause": "", "confidentiality_clause": "manter sigilo"}
+
+        confidence = compute_field_confidence(fields, self.source_text)
+
+        self.assertNotIn("penalty_clause", confidence)
+        self.assertNotIn("termination_clause", confidence)
+        self.assertIn("confidentiality_clause", confidence)
+
+    def test_non_string_field_is_omitted(self):
+        fields = {"parties": ["Empresa A", "Empresa B"]}
+
+        confidence = compute_field_confidence(fields, self.source_text)
+
+        self.assertNotIn("parties", confidence)
 
 
 if __name__ == "__main__":

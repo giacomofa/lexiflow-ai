@@ -1,6 +1,16 @@
 from services.document_classifier import reconcile_classification
-from services.grounding import grounding_summary
+from services.grounding import compute_field_confidence, grounding_summary
 from services.llm_service import analyze_document_with_llm
+
+TEXT_FIELDS_FOR_CONFIDENCE = (
+    "object",
+    "term_duration",
+    "renewal_clause",
+    "termination_clause",
+    "penalty_clause",
+    "confidentiality_clause",
+    "personal_data_details",
+)
 
 
 def _append_unique(alerts, alert):
@@ -44,6 +54,9 @@ def analyze_document(text: str, file_name: str) -> dict:
     if schema_warnings:
         for warning in schema_warnings:
             _append_unique(alerts, f"Aviso de validação de dados: {warning}")
+
+    field_values = {field: llm_result.get(field) for field in TEXT_FIELDS_FOR_CONFIDENCE}
+    llm_result["field_confidence"] = compute_field_confidence(field_values, text)
 
     llm_result["risk_alerts"] = alerts
     llm_result["document_type"] = reconciliation["final_type"]

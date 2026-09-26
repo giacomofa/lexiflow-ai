@@ -31,29 +31,49 @@ from services.storage_service import (
 from services.query_service import answer_question_from_document
 from rag.vector_store import index_document
 
+sys.path.append(str(Path(__file__).resolve().parent))
+from theme import (  # noqa: E402
+    escape,
+    inject_base_styles,
+    render_badge_table,
+    render_confidence_badge,
+    render_document_type_badge,
+    render_metric_card,
+    render_status_badge,
+)
+
 st.set_page_config(page_title="LexiFlow AI", page_icon="📄", layout="wide")
+
+inject_base_styles()
 
 init_db()
 
 
 def render_login_page():
-    st.title("LexiFlow AI")
-    st.subheader("Login")
+    _, center_col, _ = st.columns([1, 1.2, 1])
 
-    with st.form("login_form"):
-        username = st.text_input("Usuário")
-        password = st.text_input("Senha", type="password")
-        submitted = st.form_submit_button("Entrar")
+    with center_col:
+        st.markdown("<div style='height: 60px'></div>", unsafe_allow_html=True)
+        st.markdown("### 📄 LexiFlow AI")
+        st.caption("Triagem e consulta inteligente de documentos corporativos")
 
-    if submitted:
-        with get_connection() as conn:
-            user = authenticate(conn, username, password)
+        with st.container(border=True):
+            st.subheader("Login")
 
-        if user:
-            st.session_state["user"] = user
-            st.rerun()
-        else:
-            st.error("Usuário ou senha inválidos.")
+            with st.form("login_form"):
+                username = st.text_input("Usuário")
+                password = st.text_input("Senha", type="password")
+                submitted = st.form_submit_button("Entrar", use_container_width=True)
+
+            if submitted:
+                with get_connection() as conn:
+                    user = authenticate(conn, username, password)
+
+                if user:
+                    st.session_state["user"] = user
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha inválidos.")
 
 
 if "user" not in st.session_state:
@@ -100,8 +120,13 @@ def render_list(title: str, items):
         st.write("Não identificado.")
 
 
-def render_text(title: str, value):
-    st.write(f"**{title}:** {value if value else 'Não identificado.'}")
+def render_text(title: str, value, field_key: str = None, field_confidence: dict = None):
+    badge = ""
+    if field_key and field_confidence and field_key in field_confidence:
+        score = field_confidence[field_key]["score"]
+        badge = f" {render_confidence_badge(score)}"
+
+    st.markdown(f"**{title}:** {value if value else 'Não identificado.'}{badge}", unsafe_allow_html=True)
 
 
 def render_yes_no(title: str, value):
@@ -113,12 +138,23 @@ def render_yes_no(title: str, value):
         st.write(f"**{title}:** Não identificado.")
 
 
+def render_alerts(alerts):
+    if not alerts:
+        st.write("Nenhum alerta identificado.")
+        return
+
+    for alert in alerts:
+        st.markdown(f"⚠️ {alert}")
+
+
 def render_structured_analysis(full_analysis: dict):
     if not full_analysis:
         st.info("Este documento não possui análise estruturada salva. Reprocesse o arquivo para gerar os campos completos.")
         return
 
     st.subheader("Análise estruturada")
+
+    field_confidence = full_analysis.get("field_confidence", {})
 
     tab1, tab2, tab3 = st.tabs(["Campos principais", "Cláusulas e risco", "Evidências"])
 
@@ -127,22 +163,30 @@ def render_structured_analysis(full_analysis: dict):
 
         with col1:
             render_list("Partes envolvidas", full_analysis.get("parties"))
-            render_text("Objeto", full_analysis.get("object"))
+            render_text("Objeto", full_analysis.get("object"), "object", field_confidence)
             render_text("Data de início", full_analysis.get("start_date"))
             render_text("Data de fim", full_analysis.get("end_date"))
-            render_text("Prazo / vigência", full_analysis.get("term_duration"))
+            render_text("Prazo / vigência", full_analysis.get("term_duration"), "term_duration", field_confidence)
 
         with col2:
-            render_text("Renovação", full_analysis.get("renewal_clause"))
+            render_text("Renovação", full_analysis.get("renewal_clause"), "renewal_clause", field_confidence)
             render_yes_no("Menciona dados pessoais", full_analysis.get("personal_data_mentions"))
-            render_text("Detalhes sobre dados pessoais", full_analysis.get("personal_data_details"))
+            render_text(
+                "Detalhes sobre dados pessoais",
+                full_analysis.get("personal_data_details"),
+                "personal_data_details",
+                field_confidence,
+            )
             render_list("Obrigações principais", full_analysis.get("key_obligations"))
 
     with tab2:
-        render_text("Rescisão", full_analysis.get("termination_clause"))
-        render_text("Multa", full_analysis.get("penalty_clause"))
-        render_text("Confidencialidade", full_analysis.get("confidentiality_clause"))
-        render_list("Alertas identificados", full_analysis.get("risk_alerts"))
+        render_text("Rescisão", full_analysis.get("termination_clause"), "termination_clause", field_confidence)
+        render_text("Multa", full_analysis.get("penalty_clause"), "penalty_clause", field_confidence)
+        render_text(
+            "Confidencialidade", full_analysis.get("confidentiality_clause"), "confidentiality_clause", field_confidence
+        )
+        st.write("**Alertas identificados:**")
+        render_alerts(full_analysis.get("risk_alerts"))
 
     with tab3:
         render_list("Trechos de evidência", full_analysis.get("source_snippets"))
@@ -159,10 +203,17 @@ def render_overview_page():
     summary = build_portfolio_summary(documents, date.today())
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total de documentos", summary["total"])
-    col2.metric("Ativos", summary["counts"][STATUS_ATIVO])
-    col3.metric("Vencendo em 90 dias", summary["counts"][STATUS_VENCENDO_EM_90_DIAS])
-    col4.metric("Vencidos", summary["counts"][STATUS_VENCIDO])
+    with col1:
+        st.markdown(render_metric_card("📁", "Total de documentos", summary["total"], "navy"), unsafe_allow_html=True)
+    with col2:
+        st.markdown(render_metric_card("✅", "Ativos", summary["counts"][STATUS_ATIVO], "success"), unsafe_allow_html=True)
+    with col3:
+        st.markdown(
+            render_metric_card("⏳", "Vencendo em 90 dias", summary["counts"][STATUS_VENCENDO_EM_90_DIAS], "warning"),
+            unsafe_allow_html=True,
+        )
+    with col4:
+        st.markdown(render_metric_card("⛔", "Vencidos", summary["counts"][STATUS_VENCIDO], "danger"), unsafe_allow_html=True)
 
     st.divider()
 
@@ -172,7 +223,7 @@ def render_overview_page():
             {"quantidade": summary["by_type"].values()},
             index=list(summary["by_type"].keys()),
         )
-        st.bar_chart(chart_data)
+        st.bar_chart(chart_data, color="#1F3A5F")
     else:
         st.info("Nenhum documento processado ainda.")
 
@@ -180,9 +231,19 @@ def render_overview_page():
 
     st.subheader("Vence em breve (próximos 90 dias)")
     if summary["upcoming"]:
-        upcoming_table = pd.DataFrame(summary["upcoming"])[["file_name", "document_type", "end_date"]]
-        upcoming_table.columns = ["Arquivo", "Tipo documental", "Data de fim"]
-        st.dataframe(upcoming_table, use_container_width=True, hide_index=True)
+        rows = [
+            {
+                "arquivo": escape(item["file_name"]),
+                "tipo": render_document_type_badge(item["document_type"]),
+                "status": render_status_badge(STATUS_VENCENDO_EM_90_DIAS),
+                "data_fim": item["end_date"].strftime("%d/%m/%Y"),
+            }
+            for item in summary["upcoming"]
+        ]
+        render_badge_table(
+            rows,
+            [("arquivo", "Arquivo"), ("tipo", "Tipo documental"), ("status", "Status"), ("data_fim", "Data de fim")],
+        )
     else:
         st.info("Nenhum documento vencendo nos próximos 90 dias.")
 
@@ -283,7 +344,10 @@ def render_process_page():
                     indexing_error = str(e)
 
                 st.subheader("Resultado da análise")
-                st.write(f"**Tipo do documento:** {result['document_type']}")
+                st.markdown(
+                    f"**Tipo do documento:** {render_document_type_badge(result['document_type'])}",
+                    unsafe_allow_html=True,
+                )
                 st.write(f"**Resumo executivo:** {result['summary']}")
 
                 if result["document_type"] == "fora_escopo":
@@ -293,8 +357,7 @@ def render_process_page():
                     )
 
                 st.write("**Alertas:**")
-                for alert in result["alerts"]:
-                    st.write(f"- {alert}")
+                render_alerts(result["alerts"])
 
                 render_structured_analysis(result.get("full_analysis", {}))
 
@@ -350,10 +413,10 @@ def render_history_page():
     st.subheader("Detalhes do documento selecionado")
     st.write(f"**ID:** {selected_doc['id']}")
     st.write(f"**Arquivo:** {selected_doc['file_name']}")
-    st.write(f"**Tipo:** {selected_doc['document_type']}")
+    st.markdown(f"**Tipo:** {render_document_type_badge(selected_doc['document_type'])}", unsafe_allow_html=True)
     st.write(f"**Processado em:** {selected_doc['created_at']}")
     st.write(f"**Resumo:** {selected_doc['summary']}")
-    
+
     if selected_doc["document_type"] == "fora_escopo":
         st.warning(
             "Este documento foi classificado como fora do escopo do MVP. "
@@ -361,11 +424,7 @@ def render_history_page():
         )
 
     st.write("**Alertas:**")
-    if selected_doc["alerts"]:
-        for alert in selected_doc["alerts"]:
-            st.write(f"- {alert}")
-    else:
-        st.write("Nenhum alerta identificado.")
+    render_alerts(selected_doc["alerts"])
 
     render_structured_analysis(selected_doc.get("full_analysis", {}))
 
