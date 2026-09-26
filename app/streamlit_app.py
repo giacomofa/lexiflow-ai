@@ -1,18 +1,30 @@
+import sqlite3
 import sys
+from datetime import date
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
+from services.auth_service import ROLE_ADMIN, ROLE_BASIC, authenticate, create_user
 from services.document_loader import load_document
 from services.text_preprocessor import preprocess_text
 from services.llm_analysis_service import analyze_document
+from services.portfolio_service import (
+    STATUS_ATIVO,
+    STATUS_VENCENDO_EM_90_DIAS,
+    STATUS_VENCIDO,
+    build_portfolio_summary,
+)
 from services.storage_service import (
+    get_connection,
     init_db,
     save_document_analysis,
     list_documents,
+    list_documents_for_overview,
     get_document_by_id,
     list_documents_for_indexing,
 )
@@ -22,6 +34,33 @@ from rag.vector_store import index_document
 st.set_page_config(page_title="LexiFlow AI", page_icon="📄", layout="wide")
 
 init_db()
+
+
+def render_login_page():
+    st.title("LexiFlow AI")
+    st.subheader("Login")
+
+    with st.form("login_form"):
+        username = st.text_input("Usuário")
+        password = st.text_input("Senha", type="password")
+        submitted = st.form_submit_button("Entrar")
+
+    if submitted:
+        with get_connection() as conn:
+            user = authenticate(conn, username, password)
+
+        if user:
+            st.session_state["user"] = user
+            st.rerun()
+        else:
+            st.error("Usuário ou senha inválidos.")
+
+
+if "user" not in st.session_state:
+    render_login_page()
+    st.stop()
+
+current_user = st.session_state["user"]
 
 
 def reindex_all_documents():
@@ -112,7 +151,46 @@ def render_structured_analysis(full_analysis: dict):
             st.json(full_analysis)
 
 
-def render_reindex_section():
+def render_overview_page():
+    st.title("LexiFlow AI")
+    st.subheader("Visão geral")
+
+    documents = list_documents_for_overview(current_user["id"], current_user["role"])
+    summary = build_portfolio_summary(documents, date.today())
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total de documentos", summary["total"])
+    col2.metric("Ativos", summary["counts"][STATUS_ATIVO])
+    col3.metric("Vencendo em 90 dias", summary["counts"][STATUS_VENCENDO_EM_90_DIAS])
+    col4.metric("Vencidos", summary["counts"][STATUS_VENCIDO])
+
+    st.divider()
+
+    st.subheader("Distribuição por tipo documental")
+    if summary["by_type"]:
+        chart_data = pd.DataFrame(
+            {"quantidade": summary["by_type"].values()},
+            index=list(summary["by_type"].keys()),
+        )
+        st.bar_chart(chart_data)
+    else:
+        st.info("Nenhum documento processado ainda.")
+
+    st.divider()
+
+    st.subheader("Vence em breve (próximos 90 dias)")
+    if summary["upcoming"]:
+        upcoming_table = pd.DataFrame(summary["upcoming"])[["file_name", "document_type", "end_date"]]
+        upcoming_table.columns = ["Arquivo", "Tipo documental", "Data de fim"]
+        st.dataframe(upcoming_table, use_container_width=True, hide_index=True)
+    else:
+        st.info("Nenhum documento vencendo nos próximos 90 dias.")
+
+
+def render_admin_sidebar():
+    if current_user["role"] != ROLE_ADMIN:
+        return
+
     st.sidebar.subheader("Administração")
 
     if st.sidebar.button("Reindexar documentos salvos", key="reindex_button"):
@@ -135,6 +213,24 @@ def render_reindex_section():
                 f"Documentos indexados: {reindex_result['success_count']}/{reindex_result['total_docs']}. "
                 f"Chunks criados/atualizados: {reindex_result['total_chunks']}."
             )
+
+    with st.sidebar.expander("Criar novo usuário"):
+        with st.form("create_user_form", clear_on_submit=True):
+            new_username = st.text_input("Usuário", key="new_username")
+            new_password = st.text_input("Senha", type="password", key="new_password")
+            new_role = st.selectbox("Perfil", [ROLE_BASIC, ROLE_ADMIN], key="new_role")
+            create_submitted = st.form_submit_button("Criar usuário")
+
+        if create_submitted:
+            if not new_username.strip() or not new_password:
+                st.error("Informe usuário e senha.")
+            else:
+                try:
+                    with get_connection() as conn:
+                        create_user(conn, new_username.strip(), new_password, role=new_role)
+                    st.success(f"Usuário '{new_username.strip()}' criado com sucesso.")
+                except sqlite3.IntegrityError:
+                    st.error("Já existe um usuário com esse nome.")
 
 
 def render_process_page():
@@ -170,7 +266,8 @@ def render_process_page():
                 document_id = save_document_analysis(
                     file_name=uploaded_file.name,
                     document_text=processed_text,
-                    result=result
+                    result=result,
+                    user_id=current_user["id"],
                 )
 
                 chunk_count = 0
@@ -220,7 +317,7 @@ def render_history_page():
     st.subheader("Consultar histórico")
     st.write("Selecione um documento já processado para consultar os detalhes e fazer perguntas.")
 
-    documents = list_documents()
+    documents = list_documents(current_user["id"], current_user["role"])
 
     if not documents:
         st.info("Nenhum documento processado ainda.")
@@ -244,7 +341,7 @@ def render_history_page():
         return
 
     selected_id = options[selected_label]
-    selected_doc = get_document_by_id(selected_id)
+    selected_doc = get_document_by_id(selected_id, current_user["id"], current_user["role"])
 
     if not selected_doc:
         st.warning("Documento não encontrado.")
@@ -318,15 +415,24 @@ def render_history_page():
 
 
 st.sidebar.title("LexiFlow AI")
+st.sidebar.write(f"Usuário: **{current_user['username']}** ({current_user['role']})")
+if st.sidebar.button("Sair", key="logout_button"):
+    del st.session_state["user"]
+    st.rerun()
+
+st.sidebar.divider()
+
 page = st.sidebar.radio(
     "Navegação",
-    ["Processar documento", "Consultar histórico"],
+    ["Visão geral", "Processar documento", "Consultar histórico"],
     key="main_navigation"
 )
 
-render_reindex_section()
+render_admin_sidebar()
 
-if page == "Processar documento":
+if page == "Visão geral":
+    render_overview_page()
+elif page == "Processar documento":
     render_process_page()
 else:
     render_history_page()

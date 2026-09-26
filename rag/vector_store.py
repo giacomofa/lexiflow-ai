@@ -1,14 +1,14 @@
 from pathlib import Path
 import re
 
-import chromadb
-
 
 CHROMA_PATH = Path(__file__).resolve().parent.parent / "data" / "chroma_db"
 COLLECTION_NAME = "lexiflow_documents"
 
 
 def get_client():
+    import chromadb
+
     CHROMA_PATH.mkdir(parents=True, exist_ok=True)
     return chromadb.PersistentClient(path=str(CHROMA_PATH))
 
@@ -45,18 +45,42 @@ def split_large_paragraph(paragraph: str, max_chars: int = 700) -> list[str]:
     return chunks
 
 
+_SECTION_HEADER_RE = re.compile(r"^[A-ZÀ-Ú0-9º°\s]{3,60}:$")
+
+
+def _is_section_header(line: str) -> bool:
+    return bool(_SECTION_HEADER_RE.match(line.strip()))
+
+
+def group_by_section(text: str) -> list[str]:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return []
+
+    blocks: list[str] = []
+    current_block: list[str] = []
+
+    for line in lines:
+        if _is_section_header(line) and current_block:
+            blocks.append(" ".join(current_block))
+            current_block = [line]
+        else:
+            current_block.append(line)
+
+    if current_block:
+        blocks.append(" ".join(current_block))
+
+    return blocks
+
+
 def chunk_document(text: str, max_chars: int = 700) -> list[str]:
-    paragraphs = [
-        " ".join(line.split())
-        for line in text.splitlines()
-        if line.strip()
-    ]
+    blocks = group_by_section(text)
 
-    normalized_paragraphs = []
-    for paragraph in paragraphs:
-        normalized_paragraphs.extend(split_large_paragraph(paragraph, max_chars=max_chars))
+    chunks: list[str] = []
+    for block in blocks:
+        chunks.extend(split_large_paragraph(block, max_chars=max_chars))
 
-    return normalized_paragraphs
+    return chunks
 
 
 def index_document(document_id: int, file_name: str, document_text: str) -> int:
@@ -68,20 +92,11 @@ def index_document(document_id: int, file_name: str, document_text: str) -> int:
 
     ids = [f"doc_{document_id}_chunk_{i}" for i in range(len(chunks))]
     metadatas = [
-        {
-            "document_id": document_id,
-            "file_name": file_name,
-            "chunk_index": i,
-        }
+        {"document_id": document_id, "file_name": file_name, "chunk_index": i}
         for i in range(len(chunks))
     ]
 
-    collection.upsert(
-        ids=ids,
-        documents=chunks,
-        metadatas=metadatas,
-    )
-
+    collection.upsert(ids=ids, documents=chunks, metadatas=metadatas)
     return len(chunks)
 
 
@@ -100,12 +115,10 @@ def query_document(document_id: int, question: str, n_results: int = 3) -> list[
 
     output = []
     for i, doc in enumerate(documents):
-        output.append(
-            {
-                "text": doc,
-                "metadata": metadatas[i] if i < len(metadatas) else {},
-                "distance": distances[i] if i < len(distances) else None,
-            }
-        )
+        output.append({
+            "text": doc,
+            "metadata": metadatas[i] if i < len(metadatas) else {},
+            "distance": distances[i] if i < len(distances) else None,
+        })
 
     return output

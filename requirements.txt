@@ -5,3 +5,7 @@ pypdf
 chromadb
 reportlab
 protobuf==3.20.3
+pydantic
+pytest
+bcrypt
+pandas

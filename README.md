@@ -125,6 +125,8 @@ O projeto foi construído com:
 - **python-dotenv**
 - **pypdf**
 - **reportlab**
+- **Pydantic** (validação da saída do LLM)
+- **pytest / unittest** (testes automatizados)
 
 ---
 
@@ -137,9 +139,18 @@ lexiflow-ai/
 ├── app/
 │   └── streamlit_app.py
 ├── services/
+│   ├── schemas.py            # validação/normalização da saída do LLM
+│   ├── document_classifier.py  # classificação por palavras-chave (cross-check do LLM)
+│   ├── grounding.py           # validação das evidências citadas pelo LLM
+│   └── ...
 ├── rag/
 ├── data/
 ├── sample_docs/
+├── tests/                     # suíte de testes unitários
+├── eval/                      # gabarito estruturado + harness de avaliação fim a fim
+│   ├── gabarito.json
+│   ├── run_eval.py
+│   └── results/
 ├── requirements.txt
 ├── README.md
 ├── .env.example
@@ -231,9 +242,34 @@ OPENAI_API_KEY=sua_chave_aqui
 
 ---
 
+## Autenticação e perfis de acesso
+
+O sistema exige login antes de qualquer uso. Existem dois perfis:
+
+- **basic**: processa documentos e só visualiza/consulta o que ele mesmo processou.
+- **admin**: visualiza documentos de todos os usuários, cria novos usuários e é o único que enxerga o botão **Reindexar documentos salvos** na barra lateral.
+
+Na primeira execução (banco `data/lexiflow.db` vazio), o sistema cria automaticamente um usuário `admin` com senha `admin123` (ou o valor da variável de ambiente `LEXIFLOW_DEFAULT_ADMIN_PASSWORD`, se definida).
+
+> ⚠️ **Importante:** troque essa senha (criando um novo usuário admin e desativando/renomeando o padrão, ou definindo `LEXIFLOW_DEFAULT_ADMIN_PASSWORD` antes da primeira execução) antes de expor a aplicação publicamente — por exemplo, antes de publicar no Streamlit Community Cloud. Senhas são sempre armazenadas como hash bcrypt, nunca em texto plano.
+
+Novos usuários são criados pelo próprio admin, na barra lateral, em **Administração → Criar novo usuário**.
+
+Documentos processados antes da autenticação existir (histórico legado) são automaticamente atribuídos ao primeiro usuário admin criado, para não desaparecerem do histórico.
+
+---
+
 ## Como usar o sistema
 
-### Tela 1 — Processar documento
+### Tela 1 — Visão geral
+Dashboard executivo com:
+- cards de métricas (total de documentos, ativos, vencendo em 90 dias, vencidos)
+- gráfico de distribuição por tipo documental
+- tabela de documentos vencendo nos próximos 90 dias, ordenada por data
+
+NDAs e políticas internas sem data de fim explícita no documento são classificados como "sem vigência aplicável", não como "vencido".
+
+### Tela 2 — Processar documento
 Nesta tela, o usuário pode:
 
 1. enviar um documento PDF ou TXT
@@ -245,7 +281,7 @@ Nesta tela, o usuário pode:
    - alertas
    - análise estruturada completa
 
-### Tela 2 — Consultar histórico
+### Tela 3 — Consultar histórico
 Nesta tela, o usuário pode:
 
 1. selecionar um documento já processado
@@ -365,12 +401,59 @@ Dois documentos fora do escopo utilizados para validar:
 
 ---
 
+## Testes automatizados
+
+O projeto conta com uma suíte de testes unitários em `tests/`, cobrindo os
+módulos determinísticos (não dependem de chamada à API):
+
+- validação/normalização da saída do LLM (`services/schemas.py`)
+- classificação por palavras-chave (`services/document_classifier.py`)
+- validação de grounding das evidências (`services/grounding.py`)
+- chunking do RAG por seção/cláusula (`rag/vector_store.py`)
+- construção determinística de `risk_alerts` (`services/llm_analysis_service.py`)
+- helpers de resposta e inferência de intenção (`services/query_service.py`)
+
+Para rodar:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+ou, com pytest instalado:
+
+```bash
+pytest tests/ -v
+```
+
+## Avaliação automatizada fim a fim (`eval/`)
+
+A avaliação da solução deixou de ser feita manualmente em planilha. O
+gabarito estruturado está em `eval/gabarito.json`: cada caso aponta para um
+documento em `sample_docs/` e traz os valores esperados para os campos
+objetivamente verificáveis (`document_type`, `personal_data_mentions`,
+presença de cláusula de multa e de confidencialidade).
+
+O harness `eval/run_eval.py` roda a pipeline real (incluindo chamadas à API
+da OpenAI) sobre cada documento do gabarito, compara o resultado obtido com
+o esperado e grava um relatório versionável em `eval/results/`.
+
+Para rodar (requer `OPENAI_API_KEY` configurada, pois faz chamadas reais):
+
+```bash
+python -m eval.run_eval
+```
+
+Campos em texto livre (resumo, datas, obrigações) continuam exigindo leitura
+humana do relatório gerado — o harness automatiza a checagem dos campos
+objetivos, não substitui totalmente a revisão qualitativa.
+
+---
+
 ## Limitações do MVP
 
 Esta versão do projeto não contempla:
 
 - OCR avançado para documentos escaneados
-- autenticação por usuário/perfil
 - integração com sistemas corporativos externos
 - comparação automática entre versões documentais
 - monitoramento enterprise em produção
@@ -387,7 +470,7 @@ Possíveis evoluções futuras incluem:
 
 - ampliar a cobertura para novos tipos documentais
 - melhorar a avaliação automática
-- adicionar autenticação e controle de acesso
+- evoluir a autenticação (recuperação de senha, expiração de sessão, múltiplos admins com auditoria)
 - comparar versões de documentos
 - incorporar OCR
 - expandir mecanismos de governança e auditoria
