@@ -127,6 +127,8 @@ O projeto foi construído com:
 - **reportlab**
 - **Pydantic** (validação da saída do LLM)
 - **pytest / unittest** (testes automatizados)
+- **bcrypt** (hash de senhas)
+- **pandas** (tabelas/gráficos da Visão geral)
 
 ---
 
@@ -425,6 +427,8 @@ ou, com pytest instalado:
 pytest tests/ -v
 ```
 
+A suíte também roda automaticamente em todo push/PR via GitHub Actions (`.github/workflows/tests.yml`), sem depender de `OPENAI_API_KEY`.
+
 ## Avaliação automatizada fim a fim (`eval/`)
 
 A avaliação da solução deixou de ser feita manualmente em planilha. O
@@ -446,6 +450,17 @@ python -m eval.run_eval
 Campos em texto livre (resumo, datas, obrigações) continuam exigindo leitura
 humana do relatório gerado — o harness automatiza a checagem dos campos
 objetivos, não substitui totalmente a revisão qualitativa.
+
+## Confiança por campo extraído
+
+Além dos alertas determinísticos, cada campo de texto extraído (objeto,
+vigência, renovação, rescisão, multa, confidencialidade, detalhes de dados
+pessoais) recebe um selo de confiança na tela de detalhes do documento:
+"Confiança alta/média/baixa", calculado verificando se o valor citado pelo
+LLM realmente aparece no texto original (`services/grounding.py`,
+`compute_field_confidence`). Isso torna visível, campo a campo, quando a
+extração pode ter se apoiado em inferência em vez de conteúdo explícito do
+documento.
 
 ---
 
