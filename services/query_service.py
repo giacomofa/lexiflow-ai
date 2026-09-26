@@ -1,5 +1,27 @@
+import re
+
 from rag.vector_store import query_document
 from services.llm_service import answer_question_with_context, clean_llm_answer
+
+_MAX_ANSWER_CHARS = 600
+
+_EMBEDDED_LABELS_RE = re.compile(r"\n*\s*evid[êe]ncias?\s+encontradas?\s*:.*", flags=re.IGNORECASE | re.DOTALL)
+_LEADING_RESPOSTA_RE = re.compile(r"^\s*resposta\s*:\s*", flags=re.IGNORECASE)
+
+
+def strip_embedded_evidence(answer: str) -> str:
+    if not answer:
+        return answer
+    without_label = _LEADING_RESPOSTA_RE.sub("", answer.strip())
+    without_evidence_block = _EMBEDDED_LABELS_RE.sub("", without_label).strip()
+    return without_evidence_block or without_label
+
+
+def enforce_answer_limits(answer: str, max_chars: int = _MAX_ANSWER_CHARS) -> str:
+    if not answer or len(answer) <= max_chars:
+        return answer
+    truncated = answer[:max_chars].rsplit(" ", 1)[0].strip()
+    return truncated + "..."
 
 
 BINARY_STARTS = (
@@ -225,6 +247,8 @@ def answer_question_from_document(
     )
 
     llm_answer = clean_llm_answer(llm_answer)
+    llm_answer = strip_embedded_evidence(llm_answer)
+    llm_answer = enforce_answer_limits(llm_answer)
 
     negative_markers = (
         "não foi identificada",

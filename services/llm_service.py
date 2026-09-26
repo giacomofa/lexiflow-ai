@@ -27,11 +27,21 @@ def sanitize_analysis_payload(data):
     return data
 
 from dotenv import load_dotenv
-from openai import OpenAI
+
+from services.schemas import validate_llm_output
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        from openai import OpenAI
+
+        _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    return _client
 
 
 def _safe_json_loads(content: str) -> dict:
@@ -118,7 +128,7 @@ Texto do documento:
 {document_text}
 """
 
-    response = client.responses.create(
+    response = _get_client().responses.create(
         model="gpt-5.4-mini",
         input=[
             {"role": "system", "content": system_prompt},
@@ -128,7 +138,13 @@ Texto do documento:
 
     content = response.output_text.strip()
     parsed = _safe_json_loads(content)
-    return sanitize_analysis_payload(parsed)
+    sanitized = sanitize_analysis_payload(parsed)
+
+    validated, warnings = validate_llm_output(sanitized)
+    if warnings:
+        validated["_schema_warnings"] = warnings
+
+    return validated
 
 
 def answer_question_with_context(
@@ -183,7 +199,7 @@ Pergunta do usuário:
 {user_question}
 """
 
-    response = client.responses.create(
+    response = _get_client().responses.create(
         model="gpt-5.4-mini",
         input=[
             {"role": "system", "content": system_prompt},
