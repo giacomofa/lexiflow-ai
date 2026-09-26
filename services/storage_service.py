@@ -2,6 +2,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+from services.auth_service import ROLE_ADMIN, ensure_default_admin, init_users_table
+
 
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "lexiflow.db"
 
@@ -23,6 +25,26 @@ def _ensure_column_exists(conn, table_name: str, column_name: str, column_type: 
         conn.commit()
 
 
+def _backfill_document_owners(conn):
+    """Documentos criados antes da autenticação existir não têm user_id.
+    Atribui esses registros legados ao primeiro admin cadastrado, para que
+    continuem visíveis (ao admin) em vez de desaparecerem do histórico."""
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id IS NULL")
+    if cursor.fetchone()[0] == 0:
+        return
+
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE role = ? ORDER BY id ASC LIMIT 1", (ROLE_ADMIN,))
+    admin_row = cursor.fetchone()
+    if not admin_row:
+        return
+
+    cursor.execute("UPDATE documents SET user_id = ? WHERE user_id IS NULL", (admin_row["id"],))
+    conn.commit()
+
+
 def init_db():
     with get_connection() as conn:
         cursor = conn.cursor()
@@ -42,9 +64,15 @@ def init_db():
         conn.commit()
 
         _ensure_column_exists(conn, "documents", "full_analysis_json", "TEXT")
+        _ensure_column_exists(conn, "documents", "user_id", "INTEGER")
+
+        init_users_table(conn)
+        ensure_default_admin(conn)
+
+        _backfill_document_owners(conn)
 
 
-def save_document_analysis(file_name: str, document_text: str, result: dict) -> int:
+def save_document_analysis(file_name: str, document_text: str, result: dict, user_id: int) -> int:
     alerts_json = json.dumps(result.get("alerts", []), ensure_ascii=False)
     full_analysis_json = json.dumps(
         result.get("full_analysis", {}),
@@ -61,34 +89,44 @@ def save_document_analysis(file_name: str, document_text: str, result: dict) -> 
                 summary,
                 alerts_json,
                 document_text,
-                full_analysis_json
+                full_analysis_json,
+                user_id
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             file_name,
             result.get("document_type"),
             result.get("summary"),
             alerts_json,
             document_text,
-            full_analysis_json
+            full_analysis_json,
+            user_id,
         ))
 
         conn.commit()
         return cursor.lastrowid
 
 
-def list_documents():
+def list_documents(user_id: int, role: str):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute("""
-            SELECT id, file_name, document_type, summary, alerts_json, created_at
-            FROM documents
-            ORDER BY id DESC
-        """)
-
-        rows = cursor.fetchall()
+        if role == ROLE_ADMIN:
+            cursor.execute("""
+                SELECT id, file_name, document_type, summary, alerts_json, created_at, user_id
+                FROM documents
+                ORDER BY id DESC
+            """)
+            rows = cursor.fetchall()
+        else:
+            cursor.execute("""
+                SELECT id, file_name, document_type, summary, alerts_json, created_at, user_id
+                FROM documents
+                WHERE user_id = ?
+                ORDER BY id DESC
+            """, (user_id,))
+            rows = cursor.fetchall()
 
     documents = []
     for row in rows:
@@ -98,13 +136,14 @@ def list_documents():
             "document_type": row["document_type"],
             "summary": row["summary"],
             "alerts": json.loads(row["alerts_json"]) if row["alerts_json"] else [],
-            "created_at": row["created_at"]
+            "created_at": row["created_at"],
+            "user_id": row["user_id"],
         })
 
     return documents
 
 
-def get_document_by_id(document_id: int):
+def get_document_by_id(document_id: int, user_id: int, role: str):
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -118,7 +157,8 @@ def get_document_by_id(document_id: int):
                 alerts_json,
                 document_text,
                 full_analysis_json,
-                created_at
+                created_at,
+                user_id
             FROM documents
             WHERE id = ?
         """, (document_id,))
@@ -126,6 +166,9 @@ def get_document_by_id(document_id: int):
         row = cursor.fetchone()
 
     if not row:
+        return None
+
+    if role != ROLE_ADMIN and row["user_id"] != user_id:
         return None
 
     return {
@@ -136,7 +179,8 @@ def get_document_by_id(document_id: int):
         "alerts": json.loads(row["alerts_json"]) if row["alerts_json"] else [],
         "document_text": row["document_text"],
         "full_analysis": json.loads(row["full_analysis_json"]) if row["full_analysis_json"] else {},
-        "created_at": row["created_at"]
+        "created_at": row["created_at"],
+        "user_id": row["user_id"],
     }
 
 
@@ -161,3 +205,42 @@ def list_documents_for_indexing():
         }
         for row in rows
     ]
+
+
+def list_documents_for_overview(user_id: int, role: str):
+    """Retorna os campos necessários para a Visão geral executiva: tipo
+    documental e a análise estruturada completa (de onde vêm start_date/
+    end_date), respeitando o mesmo filtro de perfil de list_documents."""
+    with get_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        if role == ROLE_ADMIN:
+            cursor.execute("""
+                SELECT id, file_name, document_type, full_analysis_json, created_at
+                FROM documents
+                ORDER BY id DESC
+            """)
+            rows = cursor.fetchall()
+        else:
+            cursor.execute("""
+                SELECT id, file_name, document_type, full_analysis_json, created_at
+                FROM documents
+                WHERE user_id = ?
+                ORDER BY id DESC
+            """, (user_id,))
+            rows = cursor.fetchall()
+
+    documents = []
+    for row in rows:
+        full_analysis = json.loads(row["full_analysis_json"]) if row["full_analysis_json"] else {}
+        documents.append({
+            "id": row["id"],
+            "file_name": row["file_name"],
+            "document_type": row["document_type"],
+            "start_date": full_analysis.get("start_date"),
+            "end_date": full_analysis.get("end_date"),
+            "created_at": row["created_at"],
+        })
+
+    return documents
