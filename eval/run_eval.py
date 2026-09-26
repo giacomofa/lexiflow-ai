@@ -18,6 +18,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Em alguns terminais Windows (cmd/PowerShell com codepage legado), imprimir
+# acentos no console pode lançar UnicodeEncodeError e derrubar o script antes
+# de terminar. Força a saída padrão para UTF-8 para evitar isso.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 

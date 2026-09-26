@@ -1,0 +1,304 @@
+{
+  "generated_at": "2026-09-26T15:31:28.502950+00:00",
+  "total_cases": 10,
+  "passed_cases": 7,
+  "pass_rate": 0.7,
+  "field_accuracy": {
+    "document_type": 1.0,
+    "personal_data_mentions": 0.8,
+    "has_penalty_clause": 1.0,
+    "has_confidentiality_clause": 0.8
+  },
+  "cases": [
+    {
+      "id": "calibracao_contrato_alphatech",
+      "file_path": "sample_docs/calibracao/contrato_teste_lexiflow.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços de TI entre NovaLex Servicos Corporativos LTDA e AlphaTech Solucoes em TI LTDA. Prevê monitoramento de infraestrutura, suporte técnico e manutenção preventiva. Tem vigência de 01/01/2026 a 31/12/2026, com renovação por acordo expresso. Há cláusulas de rescisão com aviso prévio de 30 dias e multa por rescisão antecipada sem justa causa."
+    },
+    {
+      "id": "calibracao_politica_protecao_dados",
+      "file_path": "sample_docs/calibracao/politica_teste_lexiflow.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais."
+      ],
+      "needs_review": false,
+      "summary": "Politica interna de protecao de dados da NovaLex Servicos Corporativos. Estabelece diretrizes para coleta, acesso, uso, armazenamento, retencao e descarte de dados pessoais. Define principios, responsabilidades, controles para dados sensiveis e comunicacao de incidentes."
+    },
+    {
+      "id": "avaliacao_nda_inovadata",
+      "file_path": "sample_docs/avaliacao_expandida/nda_parceria_inovadata.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "nda",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "nda",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Acordo de confidencialidade entre NovaLex e InovaData para avaliação de potencial parceria comercial e tecnológica. Define sigilo sobre informações compartilhadas, exceções de confidencialidade e regras de uso restrito. Prevê vigência de 24 meses e encerramento das tratativas a qualquer tempo. Há menção eventual a dados pessoais com exigência de segurança e acesso mínimo."
+    },
+    {
+      "id": "avaliacao_contrato_consultoria_orbit",
+      "file_path": "sample_docs/avaliacao_expandida/contrato_consultoria_analytics_orbit.txt",
+      "passed": false,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": false,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços de consultoria em analytics entre NovaLex e Orbit Analytics. O objeto envolve estruturação de indicadores, dashboards executivos e revisão de consolidação de dados. Há vigência de 6 meses, com renovação por aditivo e rescisão mediante aviso prévio de 15 dias. O documento prevê cláusula de confidencialidade e menciona que não há multa contratual expressa."
+    },
+    {
+      "id": "avaliacao_contrato_flexassist",
+      "file_path": "sample_docs/avaliacao_expandida/contrato_servicos_administrativos_flexassist.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços administrativos entre NovaLex Serviços Corporativos LTDA e FlexAssist Apoio Administrativo LTDA. Prevê vigência de 18 meses, renovação automática e rescisão mediante aviso prévio de 30 dias. Também estabelece multa por descumprimento grave e cláusula de confidencialidade. Há menção ao acesso a dados cadastrais de colaboradores e fornecedores."
+    },
+    {
+      "id": "avaliacao_aditivo_alphatech",
+      "file_path": "sample_docs/avaliacao_expandida/aditivo_contrato_alphatech_prazo_multa.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "aditivo_contratual",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Não foi identificada vigência/prazo claro no documento."
+      ],
+      "needs_review": false,
+      "summary": "Aditivo contratual entre NovaLex e AlphaTech que altera a vigência do contrato principal e a cláusula de multa. As demais disposições do contrato original permanecem inalteradas, incluindo confidencialidade e proteção de dados."
+    },
+    {
+      "id": "avaliacao_politica_retencao",
+      "file_path": "sample_docs/avaliacao_expandida/politica_retencao_documental_novalex.pdf",
+      "passed": false,
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": false
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Política interna da NovaLex que define diretrizes para guarda, retenção, descarte e controle do ciclo de vida de documentos corporativos. Estabelece abrangência, prazos mínimos, restrição de acesso, tratamento de dados pessoais e responsabilidades das áreas gestoras."
+    },
+    {
+      "id": "avaliacao_politica_seguranca",
+      "file_path": "sample_docs/avaliacao_expandida/politica_seguranca_informacao_novalex.pdf",
+      "passed": false,
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": null,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": false,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": false
+      },
+      "alerts": [
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Política interna de segurança da informação da NovaLex. Define princípios, responsabilidades e controles mínimos para proteção de informações, sistemas, credenciais e ativos digitais. Estabelece regras de acesso, proteção de credenciais, tratamento de informações sensíveis e reporte de incidentes. Prevê medidas administrativas internas em caso de descumprimento."
+    },
+    {
+      "id": "fora_escopo_ata_reuniao",
+      "file_path": "sample_docs/fora_escopo/ata_reuniao_comercial_novalex.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual."
+      ],
+      "needs_review": false,
+      "summary": "Trata-se de uma ata de reunião comercial, com registro de pauta, participantes, decisões e encerramento. Não se enquadra nas categorias suportadas pelo MVP."
+    },
+    {
+      "id": "fora_escopo_relatorio_indicadores",
+      "file_path": "sample_docs/fora_escopo/relatorio_indicadores_operacionais_q1.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual."
+      ],
+      "needs_review": false,
+      "summary": "Relatório de indicadores operacionais do 1o trimestre de 2026. O documento apresenta métricas, análise de desempenho e próximos passos internos. Não se trata de contrato, NDA, política interna ou aditivo contratual."
+    }
+  ]
+}
