@@ -125,6 +125,8 @@ O projeto foi construído com:
 - **python-dotenv**
 - **pypdf**
 - **reportlab**
+- **Pydantic** (validação da saída do LLM)
+- **pytest / unittest** (testes automatizados)
 
 ---
 
@@ -137,9 +139,18 @@ lexiflow-ai/
 ├── app/
 │   └── streamlit_app.py
 ├── services/
+│   ├── schemas.py            # validação/normalização da saída do LLM
+│   ├── document_classifier.py  # classificação por palavras-chave (cross-check do LLM)
+│   ├── grounding.py           # validação das evidências citadas pelo LLM
+│   └── ...
 ├── rag/
 ├── data/
 ├── sample_docs/
+├── tests/                     # suíte de testes unitários
+├── eval/                      # gabarito estruturado + harness de avaliação fim a fim
+│   ├── gabarito.json
+│   ├── run_eval.py
+│   └── results/
 ├── requirements.txt
 ├── README.md
 ├── .env.example
@@ -362,6 +373,54 @@ Dois documentos fora do escopo utilizados para validar:
 - classificação correta como `fora_escopo`
 - aviso na interface
 - bloqueio da funcionalidade de perguntas
+
+---
+
+## Testes automatizados
+
+O projeto conta com uma suíte de testes unitários em `tests/`, cobrindo os
+módulos determinísticos (não dependem de chamada à API):
+
+- validação/normalização da saída do LLM (`services/schemas.py`)
+- classificação por palavras-chave (`services/document_classifier.py`)
+- validação de grounding das evidências (`services/grounding.py`)
+- chunking do RAG por seção/cláusula (`rag/vector_store.py`)
+- construção determinística de `risk_alerts` (`services/llm_analysis_service.py`)
+- helpers de resposta e inferência de intenção (`services/query_service.py`)
+
+Para rodar:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+ou, com pytest instalado:
+
+```bash
+pytest tests/ -v
+```
+
+## Avaliação automatizada fim a fim (`eval/`)
+
+A avaliação da solução deixou de ser feita manualmente em planilha. O
+gabarito estruturado está em `eval/gabarito.json`: cada caso aponta para um
+documento em `sample_docs/` e traz os valores esperados para os campos
+objetivamente verificáveis (`document_type`, `personal_data_mentions`,
+presença de cláusula de multa e de confidencialidade).
+
+O harness `eval/run_eval.py` roda a pipeline real (incluindo chamadas à API
+da OpenAI) sobre cada documento do gabarito, compara o resultado obtido com
+o esperado e grava um relatório versionável em `eval/results/`.
+
+Para rodar (requer `OPENAI_API_KEY` configurada, pois faz chamadas reais):
+
+```bash
+python -m eval.run_eval
+```
+
+Campos em texto livre (resumo, datas, obrigações) continuam exigindo leitura
+humana do relatório gerado — o harness automatiza a checagem dos campos
+objetivos, não substitui totalmente a revisão qualitativa.
 
 ---
 

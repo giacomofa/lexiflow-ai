@@ -1,0 +1,115 @@
+{
+  "_readme": "Gabarito estruturado para avaliação automatizada do LexiFlow AI. Cada entrada aponta para um documento em sample_docs/ e traz os valores esperados para os campos objetivamente verificáveis (document_type, personal_data_mentions, has_penalty_clause, has_confidentiality_clause). Campos em texto livre (summary, datas, obrigações) não entram no gabarito por serem naturalmente variáveis na redação do LLM; a avaliação desses campos continua exigindo leitura humana das amostras em eval/results/. Este gabarito foi derivado por leitura manual do conteúdo de cada documento em sample_docs/, substituindo a planilha de avaliação manual anterior.",
+  "cases": [
+    {
+      "id": "calibracao_contrato_alphatech",
+      "file_path": "sample_docs/calibracao/contrato_teste_lexiflow.txt",
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "notes": "Contrato de TI com multa de 20%, cláusula de confidencialidade e tratamento de dados pessoais de clientes."
+    },
+    {
+      "id": "calibracao_politica_protecao_dados",
+      "file_path": "sample_docs/calibracao/politica_teste_lexiflow.pdf",
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "notes": "Política interna de proteção de dados pessoais; não é um contrato, então não deve ter multa nem cláusula de confidencialidade contratual."
+    },
+    {
+      "id": "avaliacao_nda_inovadata",
+      "file_path": "sample_docs/avaliacao_expandida/nda_parceria_inovadata.txt",
+      "expected": {
+        "document_type": "nda",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "notes": "NDA que menciona explicitamente 'Não há cláusula expressa de multa' e discute compartilhamento eventual de dados pessoais."
+    },
+    {
+      "id": "avaliacao_contrato_consultoria_orbit",
+      "file_path": "sample_docs/avaliacao_expandida/contrato_consultoria_analytics_orbit.txt",
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "notes": "Contrato de consultoria que afirma explicitamente 'Não há multa contratual expressa' e 'Não há previsão de tratamento de dados pessoais como atividade central'."
+    },
+    {
+      "id": "avaliacao_contrato_flexassist",
+      "file_path": "sample_docs/avaliacao_expandida/contrato_servicos_administrativos_flexassist.txt",
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "notes": "Contrato administrativo com multa de 10%, confidencialidade e acesso a dados cadastrais de colaboradores/fornecedores."
+    },
+    {
+      "id": "avaliacao_aditivo_alphatech",
+      "file_path": "sample_docs/avaliacao_expandida/aditivo_contrato_alphatech_prazo_multa.pdf",
+      "expected": {
+        "document_type": "aditivo_contratual",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "notes": "Aditivo que altera vigência e multa (passa a 15%) e ratifica cláusulas de confidencialidade e dados pessoais do contrato original."
+    },
+    {
+      "id": "avaliacao_politica_retencao",
+      "file_path": "sample_docs/avaliacao_expandida/politica_retencao_documental_novalex.pdf",
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "notes": "Política de retenção documental; menciona documentos com dados pessoais, mas não é um contrato com multa/confidencialidade formal."
+    },
+    {
+      "id": "avaliacao_politica_seguranca",
+      "file_path": "sample_docs/avaliacao_expandida/politica_seguranca_informacao_novalex.pdf",
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "notes": "Política de segurança da informação genérica; trata de credenciais/acesso, não menciona dados pessoais especificamente nem prevê multa (apenas medidas administrativas, que a regra 17 do prompt exclui de penalty_clause)."
+    },
+    {
+      "id": "fora_escopo_ata_reuniao",
+      "file_path": "sample_docs/fora_escopo/ata_reuniao_comercial_novalex.txt",
+      "expected": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "notes": "Ata de reunião comercial; não é um tipo suportado pelo MVP."
+    },
+    {
+      "id": "fora_escopo_relatorio_indicadores",
+      "file_path": "sample_docs/fora_escopo/relatorio_indicadores_operacionais_q1.pdf",
+      "expected": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "notes": "Relatório de indicadores operacionais; não é um tipo suportado pelo MVP."
+    }
+  ]
+}
