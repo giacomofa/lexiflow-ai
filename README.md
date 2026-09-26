@@ -242,9 +242,34 @@ OPENAI_API_KEY=sua_chave_aqui
 
 ---
 
+## Autenticação e perfis de acesso
+
+O sistema exige login antes de qualquer uso. Existem dois perfis:
+
+- **basic**: processa documentos e só visualiza/consulta o que ele mesmo processou.
+- **admin**: visualiza documentos de todos os usuários, cria novos usuários e é o único que enxerga o botão **Reindexar documentos salvos** na barra lateral.
+
+Na primeira execução (banco `data/lexiflow.db` vazio), o sistema cria automaticamente um usuário `admin` com senha `admin123` (ou o valor da variável de ambiente `LEXIFLOW_DEFAULT_ADMIN_PASSWORD`, se definida).
+
+> ⚠️ **Importante:** troque essa senha (criando um novo usuário admin e desativando/renomeando o padrão, ou definindo `LEXIFLOW_DEFAULT_ADMIN_PASSWORD` antes da primeira execução) antes de expor a aplicação publicamente — por exemplo, antes de publicar no Streamlit Community Cloud. Senhas são sempre armazenadas como hash bcrypt, nunca em texto plano.
+
+Novos usuários são criados pelo próprio admin, na barra lateral, em **Administração → Criar novo usuário**.
+
+Documentos processados antes da autenticação existir (histórico legado) são automaticamente atribuídos ao primeiro usuário admin criado, para não desaparecerem do histórico.
+
+---
+
 ## Como usar o sistema
 
-### Tela 1 — Processar documento
+### Tela 1 — Visão geral
+Dashboard executivo com:
+- cards de métricas (total de documentos, ativos, vencendo em 90 dias, vencidos)
+- gráfico de distribuição por tipo documental
+- tabela de documentos vencendo nos próximos 90 dias, ordenada por data
+
+NDAs e políticas internas sem data de fim explícita no documento são classificados como "sem vigência aplicável", não como "vencido".
+
+### Tela 2 — Processar documento
 Nesta tela, o usuário pode:
 
 1. enviar um documento PDF ou TXT
@@ -256,7 +281,7 @@ Nesta tela, o usuário pode:
    - alertas
    - análise estruturada completa
 
-### Tela 2 — Consultar histórico
+### Tela 3 — Consultar histórico
 Nesta tela, o usuário pode:
 
 1. selecionar um documento já processado
@@ -429,7 +454,6 @@ objetivos, não substitui totalmente a revisão qualitativa.
 Esta versão do projeto não contempla:
 
 - OCR avançado para documentos escaneados
-- autenticação por usuário/perfil
 - integração com sistemas corporativos externos
 - comparação automática entre versões documentais
 - monitoramento enterprise em produção
@@ -446,7 +470,7 @@ Possíveis evoluções futuras incluem:
 
 - ampliar a cobertura para novos tipos documentais
 - melhorar a avaliação automática
-- adicionar autenticação e controle de acesso
+- evoluir a autenticação (recuperação de senha, expiração de sessão, múltiplos admins com auditoria)
 - comparar versões de documentos
 - incorporar OCR
 - expandir mecanismos de governança e auditoria
