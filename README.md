@@ -544,6 +544,16 @@ LLM realmente aparece no texto original (`services/grounding.py`,
 extração pode ter se apoiado em inferência em vez de conteúdo explícito do
 documento.
 
+Esse sinal não fica só decorativo: quando um ou mais campos ficam com
+confiança baixa, o documento é sinalizado com **"⚠️ revisão pendente"** — no
+banner de detalhes, na lista de "Consultar histórico" e num alerta
+específico citando quais campos ficaram abaixo do limiar de confiança
+(`services/llm_analysis_service.py`, `low_confidence_fields`). Antes, esse
+sinal só existia como badge visual isolado; agora ele participa do mesmo
+`needs_review` que já reagia a classificação divergente e evidências não
+localizadas, e o resultado fica persistido no banco (não só na tela
+imediatamente após o processamento).
+
 ---
 
 ## Limitações do MVP

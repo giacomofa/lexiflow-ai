@@ -65,6 +65,7 @@ def init_db():
 
         _ensure_column_exists(conn, "documents", "full_analysis_json", "TEXT")
         _ensure_column_exists(conn, "documents", "user_id", "INTEGER")
+        _ensure_column_exists(conn, "documents", "needs_review", "INTEGER")
 
         init_users_table(conn)
         ensure_default_admin(conn)
@@ -90,9 +91,10 @@ def save_document_analysis(file_name: str, document_text: str, result: dict, use
                 alerts_json,
                 document_text,
                 full_analysis_json,
-                user_id
+                user_id,
+                needs_review
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             file_name,
             result.get("document_type"),
@@ -101,6 +103,7 @@ def save_document_analysis(file_name: str, document_text: str, result: dict, use
             document_text,
             full_analysis_json,
             user_id,
+            1 if result.get("needs_review") else 0,
         ))
 
         conn.commit()
@@ -114,14 +117,14 @@ def list_documents(user_id: int, role: str):
 
         if role == ROLE_ADMIN:
             cursor.execute("""
-                SELECT id, file_name, document_type, summary, alerts_json, created_at, user_id
+                SELECT id, file_name, document_type, summary, alerts_json, created_at, user_id, needs_review
                 FROM documents
                 ORDER BY id DESC
             """)
             rows = cursor.fetchall()
         else:
             cursor.execute("""
-                SELECT id, file_name, document_type, summary, alerts_json, created_at, user_id
+                SELECT id, file_name, document_type, summary, alerts_json, created_at, user_id, needs_review
                 FROM documents
                 WHERE user_id = ?
                 ORDER BY id DESC
@@ -138,6 +141,7 @@ def list_documents(user_id: int, role: str):
             "alerts": json.loads(row["alerts_json"]) if row["alerts_json"] else [],
             "created_at": row["created_at"],
             "user_id": row["user_id"],
+            "needs_review": bool(row["needs_review"]),
         })
 
     return documents
@@ -158,7 +162,8 @@ def get_document_by_id(document_id: int, user_id: int, role: str):
                 document_text,
                 full_analysis_json,
                 created_at,
-                user_id
+                user_id,
+                needs_review
             FROM documents
             WHERE id = ?
         """, (document_id,))
@@ -181,6 +186,7 @@ def get_document_by_id(document_id: int, user_id: int, role: str):
         "full_analysis": json.loads(row["full_analysis_json"]) if row["full_analysis_json"] else {},
         "created_at": row["created_at"],
         "user_id": row["user_id"],
+        "needs_review": bool(row["needs_review"]),
     }
 
 

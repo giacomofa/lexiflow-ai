@@ -358,6 +358,12 @@ def render_process_page():
                         "O LexiFlow foi desenhado para contratos, políticas internas, NDAs e aditivos contratuais."
                     )
 
+                if result.get("needs_review"):
+                    st.warning(
+                        "⚠️ Revisão manual recomendada — pelo menos um campo extraído tem baixa confiança "
+                        "ou a classificação ficou divergente. Veja os alertas abaixo para detalhes."
+                    )
+
                 st.write("**Alertas:**")
                 render_alerts(result["alerts"])
 
@@ -405,7 +411,8 @@ def render_history_page():
         return
 
     options = {
-        f"ID {doc['id']} | {doc['file_name']} | {doc['document_type']}": doc["id"]
+        f"ID {doc['id']} | {doc['file_name']} | {doc['document_type']}"
+        + (" ⚠️ revisão pendente" if doc.get("needs_review") else ""): doc["id"]
         for doc in documents
     }
 
@@ -439,6 +446,12 @@ def render_history_page():
         st.warning(
             "Este documento foi classificado como fora do escopo do MVP. "
             "As funcionalidades de extração e consulta podem ser menos aderentes do que nos tipos suportados."
+        )
+
+    if selected_doc.get("needs_review"):
+        st.warning(
+            "⚠️ Revisão manual recomendada — pelo menos um campo extraído tem baixa confiança "
+            "ou a classificação ficou divergente. Veja os alertas abaixo para detalhes."
         )
 
     st.write("**Alertas:**")

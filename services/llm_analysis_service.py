@@ -18,7 +18,14 @@ def _append_unique(alerts, alert):
         alerts.append(alert)
 
 
-def build_deterministic_alerts(llm_result, reconciliation, grounding):
+def low_confidence_fields(field_confidence: dict) -> list[str]:
+    """Campos cujo valor citado pelo LLM não foi encontrado (ou só foi
+    encontrado de forma aproximada, abaixo do limiar de match exato/alto) no
+    texto original — ver services/grounding.py, check_snippet_grounding."""
+    return sorted(field for field, info in field_confidence.items() if not info.get("grounded"))
+
+
+def build_deterministic_alerts(llm_result, reconciliation, grounding, field_confidence):
     alerts = list(llm_result.get("risk_alerts", []))
     document_type = reconciliation["final_type"]
 
@@ -39,6 +46,15 @@ def build_deterministic_alerts(llm_result, reconciliation, grounding):
     if grounding["ungrounded_count"] > 0:
         _append_unique(alerts, f"{grounding['ungrounded_count']} trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual.")
 
+    fields_with_low_confidence = low_confidence_fields(field_confidence)
+    if fields_with_low_confidence:
+        label = "campo" if len(fields_with_low_confidence) == 1 else "campos"
+        _append_unique(
+            alerts,
+            f"{len(fields_with_low_confidence)} {label} com confiança baixa "
+            f"({', '.join(fields_with_low_confidence)}) — recomenda-se revisão manual.",
+        )
+
     return alerts
 
 
@@ -48,23 +64,30 @@ def analyze_document(text: str, file_name: str) -> dict:
     reconciliation = reconcile_classification(llm_result.get("document_type", "fora_escopo"), text)
     grounding = grounding_summary(llm_result.get("source_snippets", []), text)
 
-    alerts = build_deterministic_alerts(llm_result, reconciliation, grounding)
+    field_values = {field: llm_result.get(field) for field in TEXT_FIELDS_FOR_CONFIDENCE}
+    field_confidence = compute_field_confidence(field_values, text)
+    llm_result["field_confidence"] = field_confidence
+
+    alerts = build_deterministic_alerts(llm_result, reconciliation, grounding, field_confidence)
 
     schema_warnings = llm_result.pop("_schema_warnings", None)
     if schema_warnings:
         for warning in schema_warnings:
             _append_unique(alerts, f"Aviso de validação de dados: {warning}")
 
-    field_values = {field: llm_result.get(field) for field in TEXT_FIELDS_FOR_CONFIDENCE}
-    llm_result["field_confidence"] = compute_field_confidence(field_values, text)
-
     llm_result["risk_alerts"] = alerts
     llm_result["document_type"] = reconciliation["final_type"]
+
+    needs_review = (
+        reconciliation["needs_review"]
+        or grounding["ungrounded_count"] > 0
+        or bool(low_confidence_fields(field_confidence))
+    )
 
     return {
         "document_type": reconciliation["final_type"],
         "summary": llm_result.get("summary") or "Resumo não identificado.",
         "alerts": alerts,
         "full_analysis": llm_result,
-        "needs_review": reconciliation["needs_review"] or grounding["ungrounded_count"] > 0,
+        "needs_review": needs_review,
     }
