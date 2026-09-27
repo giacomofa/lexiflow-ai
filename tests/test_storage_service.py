@@ -104,6 +104,72 @@ class StorageServiceUserFilteringTests(unittest.TestCase):
         self.assertTrue(listed_flags[doc_id])
         self.assertFalse(listed_flags[self.doc_id_basic])
 
+    def test_document_text_is_encrypted_at_rest(self):
+        """O texto cru salvo no banco não deve conter o conteúdo em texto
+        plano — ver services/encryption_service.py."""
+        with storage_service.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT document_text, full_analysis_json FROM documents WHERE id = ?", (self.doc_id_basic,))
+            raw_text, raw_full_analysis = cursor.fetchone()
+
+        self.assertNotEqual(raw_text, "texto 1")
+        self.assertNotIn("texto 1", raw_text)
+
+        fetched = storage_service.get_document_by_id(self.doc_id_basic, self.basic_user_id, ROLE_BASIC)
+        self.assertEqual(fetched["document_text"], "texto 1")
+
+    def test_legacy_plaintext_row_still_readable(self):
+        """Regressão: linhas gravadas antes da criptografia existir (texto
+        plano direto na coluna) precisam continuar legíveis, não quebrar."""
+        with storage_service.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO documents (file_name, document_type, summary, alerts_json, document_text, full_analysis_json, user_id, needs_review)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "doc_legado.txt",
+                    "nda",
+                    "resumo legado",
+                    "[]",
+                    "texto em claro salvo antes da criptografia existir",
+                    '{"document_type": "nda"}',
+                    self.basic_user_id,
+                    0,
+                ),
+            )
+            conn.commit()
+            legacy_id = cursor.lastrowid
+
+        fetched = storage_service.get_document_by_id(legacy_id, self.basic_user_id, ROLE_BASIC)
+
+        self.assertEqual(fetched["document_text"], "texto em claro salvo antes da criptografia existir")
+        self.assertEqual(fetched["full_analysis"]["document_type"], "nda")
+
+    def test_basic_user_can_delete_own_document(self):
+        deleted = storage_service.delete_document(self.doc_id_basic, self.basic_user_id, ROLE_BASIC)
+
+        self.assertTrue(deleted)
+        self.assertIsNone(storage_service.get_document_by_id(self.doc_id_basic, self.basic_user_id, ROLE_BASIC))
+
+    def test_basic_user_cannot_delete_another_users_document(self):
+        deleted = storage_service.delete_document(self.doc_id_other, self.basic_user_id, ROLE_BASIC)
+
+        self.assertFalse(deleted)
+        self.assertIsNotNone(storage_service.get_document_by_id(self.doc_id_other, self.admin_user_id, ROLE_ADMIN))
+
+    def test_admin_can_delete_any_document(self):
+        deleted = storage_service.delete_document(self.doc_id_basic, self.admin_user_id, ROLE_ADMIN)
+
+        self.assertTrue(deleted)
+        self.assertIsNone(storage_service.get_document_by_id(self.doc_id_basic, self.admin_user_id, ROLE_ADMIN))
+
+    def test_deleting_nonexistent_document_returns_false(self):
+        deleted = storage_service.delete_document(999999, self.admin_user_id, ROLE_ADMIN)
+
+        self.assertFalse(deleted)
+
 
 if __name__ == "__main__":
     unittest.main()

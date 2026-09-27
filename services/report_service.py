@@ -121,6 +121,9 @@ def generate_pdf_report(document: dict) -> bytes:
         meta_rows.append(["Processado em:", str(document["created_at"])])
     if document.get("id") is not None:
         meta_rows.append(["ID:", str(document["id"])])
+    if full_analysis.get("prompt_version"):
+        model_suffix = f" ({full_analysis['model']})" if full_analysis.get("model") else ""
+        meta_rows.append(["Versão do prompt:", f"{full_analysis['prompt_version']}{model_suffix}"])
 
     meta_table = Table(meta_rows, colWidths=[3.5 * cm, None])
     meta_table.setStyle(TableStyle([

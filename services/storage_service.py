@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 
 from services.auth_service import ROLE_ADMIN, ensure_default_admin, init_users_table
+from services.encryption_service import decrypt_text, encrypt_text
 
 
 DB_PATH = Path(__file__).resolve().parent.parent / "data" / "lexiflow.db"
@@ -80,6 +81,10 @@ def save_document_analysis(file_name: str, document_text: str, result: dict, use
         ensure_ascii=False
     )
 
+    # document_text e full_analysis_json são as colunas mais sensíveis: o
+    # texto integral do documento e os campos extraídos (incluindo
+    # personal_data_details, quando aplicável) ficam cifrados em repouso —
+    # ver services/encryption_service.py.
     with get_connection() as conn:
         cursor = conn.cursor()
 
@@ -100,8 +105,8 @@ def save_document_analysis(file_name: str, document_text: str, result: dict, use
             result.get("document_type"),
             result.get("summary"),
             alerts_json,
-            document_text,
-            full_analysis_json,
+            encrypt_text(document_text),
+            encrypt_text(full_analysis_json),
             user_id,
             1 if result.get("needs_review") else 0,
         ))
@@ -176,18 +181,46 @@ def get_document_by_id(document_id: int, user_id: int, role: str):
     if role != ROLE_ADMIN and row["user_id"] != user_id:
         return None
 
+    document_text = decrypt_text(row["document_text"])
+    full_analysis_json = decrypt_text(row["full_analysis_json"])
+
     return {
         "id": row["id"],
         "file_name": row["file_name"],
         "document_type": row["document_type"],
         "summary": row["summary"],
         "alerts": json.loads(row["alerts_json"]) if row["alerts_json"] else [],
-        "document_text": row["document_text"],
-        "full_analysis": json.loads(row["full_analysis_json"]) if row["full_analysis_json"] else {},
+        "document_text": document_text,
+        "full_analysis": json.loads(full_analysis_json) if full_analysis_json else {},
         "created_at": row["created_at"],
         "user_id": row["user_id"],
         "needs_review": bool(row["needs_review"]),
     }
+
+
+def delete_document(document_id: int, user_id: int, role: str) -> bool:
+    """Exclui permanentemente um documento (texto, análise e alertas).
+
+    Usuário básico só pode excluir os próprios documentos; admin pode
+    excluir qualquer um. Não remove os chunks correspondentes no Chroma —
+    isso é responsabilidade de quem chama (ver
+    rag.vector_store.delete_document_chunks), para manter este módulo sem
+    depender da camada de indexação vetorial.
+
+    Retorna True se algum registro foi de fato excluído.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+
+        if role == ROLE_ADMIN:
+            cursor.execute("DELETE FROM documents WHERE id = ?", (document_id,))
+        else:
+            cursor.execute(
+                "DELETE FROM documents WHERE id = ? AND user_id = ?", (document_id, user_id)
+            )
+
+        conn.commit()
+        return cursor.rowcount > 0
 
 
 def list_documents_for_indexing():
@@ -207,7 +240,7 @@ def list_documents_for_indexing():
         {
             "id": row["id"],
             "file_name": row["file_name"],
-            "document_text": row["document_text"],
+            "document_text": decrypt_text(row["document_text"]),
         }
         for row in rows
     ]
@@ -239,7 +272,8 @@ def list_documents_for_overview(user_id: int, role: str):
 
     documents = []
     for row in rows:
-        full_analysis = json.loads(row["full_analysis_json"]) if row["full_analysis_json"] else {}
+        full_analysis_json = decrypt_text(row["full_analysis_json"])
+        full_analysis = json.loads(full_analysis_json) if full_analysis_json else {}
         documents.append({
             "id": row["id"],
             "file_name": row["file_name"],

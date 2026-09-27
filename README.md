@@ -129,6 +129,7 @@ O projeto foi construído com:
 - **pytest / unittest** (testes automatizados)
 - **bcrypt** (hash de senhas)
 - **pandas** (tabelas/gráficos da Visão geral)
+- **cryptography** (criptografia em repouso do texto dos documentos)
 
 ---
 
@@ -261,6 +262,43 @@ Documentos processados antes da autenticação existir (histórico legado) são 
 
 ---
 
+## Proteção de dados pessoais
+
+O sistema já identificava quando um documento menciona dados pessoais
+(`personal_data_mentions`), mas identificar não é o mesmo que proteger.
+Duas camadas foram adicionadas para isso:
+
+**1. Criptografia em repouso.** O texto integral do documento
+(`document_text`) e a análise estruturada (`full_analysis_json`) — que pode
+conter `personal_data_details` citado verbatim — ficam cifrados no SQLite
+(`services/encryption_service.py`, `Fernet`/AES simétrico). As demais
+colunas (resumo, tipo, alertas) continuam em texto plano, para permitir
+listagem/dashboard sem precisar decifrar em massa.
+
+A chave vem de `LEXIFLOW_ENCRYPTION_KEY` (recomendado em produção — defina
+nos secrets do Streamlit Community Cloud) ou, se ausente, é gerada
+automaticamente na primeira execução e salva em `data/.encryption_key`
+(fora do controle de versão). **Se essa chave for perdida, os documentos já
+salvos ficam permanentemente ilegíveis** — em produção, prefira sempre a
+variável de ambiente a depender do arquivo local, especialmente em hospedagem
+com filesystem efêmero. Registros salvos antes desta camada existir
+continuam legíveis normalmente (fallback automático para texto plano).
+
+**2. Exclusão permanente (direito de eliminação).** Antes não havia nenhuma
+forma de remover um documento já processado. Agora, tanto o dono do
+documento quanto um admin podem excluí-lo permanentemente na tela de
+Consultar histórico (com confirmação em duas etapas) — remove o registro do
+SQLite e os chunks correspondentes no Chroma.
+
+**Limitação conhecida:** os chunks indexados no Chroma para busca semântica
+(`data/chroma_db/`) continuam em texto plano — criptografá-los quebraria a
+busca por similaridade, que precisa comparar embeddings calculados sobre o
+texto real. A exclusão remove os chunks do documento excluído, mas enquanto
+um documento existe, seu conteúdo é pesquisável em texto plano nesse índice
+vetorial. Isso é documentado aqui em vez de omitido.
+
+---
+
 ## Como usar o sistema
 
 ### Tela 1 — Visão geral
@@ -317,6 +355,11 @@ A análise estruturada pode incluir campos como:
 - `risk_alerts`
 - `source_snippets`
 
+Além do que o LLM extrai, `full_analysis` também carrega metadados
+adicionados pelo próprio sistema (não pelo modelo): `field_confidence` (ver
+"Confiança por campo extraído") e `prompt_version` / `model` (ver
+"Engenharia de prompt e uso da API", a seguir).
+
 ---
 
 ## Engenharia de prompt e uso da API (`services/llm_service.py`)
@@ -350,6 +393,18 @@ malicioso não consiga "fechar" a delimitação antes da hora
 documento contendo uma tentativa explícita de injeção de prompt — o modelo
 manteve o comportamento esperado nos dois fluxos (análise e perguntas e
 respostas) em vez de obedecer à instrução injetada.
+
+**4. Versionamento do prompt.** `ANALYSIS_PROMPT_VERSION` (hoje `"v1"`) é
+salvo junto de cada análise, dentro do próprio `full_analysis` (campos
+`prompt_version` e `model`) — visível na tela de detalhes do documento, no
+relatório em PDF e no cabeçalho de cada relatório gerado por
+`eval/run_eval.py`. Sem isso, uma análise salva no banco ou um relatório de
+avaliação antigo eram "mudos": não davam para saber, meses depois, se uma
+mudança de resultado veio de um ajuste no prompt, de uma atualização
+silenciosa do modelo do lado da OpenAI, ou de uma regressão real — os três
+ficavam indistinguíveis. O número deve subir (`"v2"`, `"v3"`...) sempre que
+o conteúdo do `system_prompt` de `analyze_document_with_llm` mudar de forma
+que possa afetar o resultado.
 
 ---
 
@@ -613,6 +668,7 @@ Esta versão do projeto não contempla:
 - monitoramento enterprise em produção
 - cobertura ampla de outros tipos documentais
 - governança completa de acesso e auditoria
+- criptografia dos chunks indexados no Chroma (o texto salvo no SQLite é cifrado, mas o índice de busca semântica continua em texto plano — ver "Proteção de dados pessoais")
 
 O projeto foi intencionalmente delimitado para manter foco, clareza e profundidade no problema escolhido.
 

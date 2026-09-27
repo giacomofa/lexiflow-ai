@@ -100,6 +100,14 @@ def index_document(document_id: int, file_name: str, document_text: str) -> int:
     return len(chunks)
 
 
+def delete_document_chunks(document_id: int) -> None:
+    """Remove do Chroma todos os chunks de um documento excluído — sem isso,
+    o texto (com eventuais dados pessoais) continuaria pesquisável mesmo
+    depois de o registro principal ser apagado do SQLite."""
+    collection = get_collection()
+    collection.delete(where={"document_id": document_id})
+
+
 def query_document(document_id: int, question: str, n_results: int = 3) -> list[dict]:
     collection = get_collection()
 

@@ -37,6 +37,15 @@ MODEL_NAME = "gpt-5.4-mini"
 # sempre a mesma análise, não variação criativa entre execuções.
 TEMPERATURE = 0
 
+# Bump sempre que o CONTEÚDO do system_prompt de analyze_document_with_llm
+# mudar de forma que possa afetar o resultado (nova regra, reformulação de
+# instrução, mudança de categoria etc.). Sem isso, não há como saber, ao
+# olhar uma análise salva ou um relatório antigo do eval/, se uma variação
+# de resultado veio de uma mudança de prompt, de uma atualização silenciosa
+# do modelo no lado da OpenAI, ou de uma regressão real — os três ficam
+# indistinguíveis sem essa rastreabilidade mínima.
+ANALYSIS_PROMPT_VERSION = "v1"
+
 _client = None
 
 
@@ -130,6 +139,9 @@ Nome do arquivo:
     validated, warnings = validate_llm_output(sanitized)
     if warnings:
         validated["_schema_warnings"] = warnings
+
+    validated["prompt_version"] = ANALYSIS_PROMPT_VERSION
+    validated["model"] = MODEL_NAME
 
     return validated
 

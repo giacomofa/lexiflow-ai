@@ -1,4 +1,7 @@
+import io
 import unittest
+
+from pypdf import PdfReader
 
 from services.report_service import generate_pdf_report
 
@@ -45,6 +48,37 @@ class GeneratePdfReportTests(unittest.TestCase):
         document = {
             "file_name": "arquivo.txt",
             "document_type": "tipo_nao_mapeado",
+            "summary": "resumo",
+            "alerts": [],
+            "full_analysis": {},
+        }
+
+        pdf_bytes = generate_pdf_report(document)
+
+        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
+
+    def test_prompt_version_appears_in_pdf_when_present(self):
+        """Rastreabilidade: o relatório precisa deixar visível com qual
+        versão de prompt/modelo a análise foi gerada, para não virar um
+        registro mudo se o prompt mudar no futuro."""
+        document = {
+            "file_name": "contrato.txt",
+            "document_type": "contrato_prestacao_servicos",
+            "summary": "resumo",
+            "alerts": [],
+            "full_analysis": {"prompt_version": "v1", "model": "gpt-5.4-mini"},
+        }
+
+        pdf_bytes = generate_pdf_report(document)
+        text = "".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf_bytes)).pages)
+
+        self.assertIn("v1", text)
+        self.assertIn("gpt-5.4-mini", text)
+
+    def test_missing_prompt_version_is_omitted_without_crashing(self):
+        document = {
+            "file_name": "contrato.txt",
+            "document_type": "contrato_prestacao_servicos",
             "summary": "resumo",
             "alerts": [],
             "full_analysis": {},

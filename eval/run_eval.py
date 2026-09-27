@@ -28,6 +28,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from services.llm_analysis_service import analyze_document  # noqa: E402
+from services.llm_service import ANALYSIS_PROMPT_VERSION, MODEL_NAME  # noqa: E402
 from services.document_loader import load_document  # noqa: E402
 from services.text_preprocessor import preprocess_text  # noqa: E402
 
@@ -124,6 +125,8 @@ def run() -> dict:
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "prompt_version": ANALYSIS_PROMPT_VERSION,
+        "model": MODEL_NAME,
         "total_cases": total,
         "passed_cases": passed,
         "pass_rate": round(passed / total, 3) if total else None,
@@ -138,6 +141,7 @@ def run() -> dict:
         json.dump(report, f, ensure_ascii=False, indent=2)
 
     print()
+    print(f"Prompt version: {ANALYSIS_PROMPT_VERSION} | Modelo: {MODEL_NAME}")
     print(f"Resultado: {passed}/{total} casos aprovados ({report['pass_rate']:.1%})")
     for field, accuracy in field_accuracy.items():
         print(f"  - acurácia de '{field}': {accuracy:.1%}" if accuracy is not None else f"  - '{field}': sem dados")
