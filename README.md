@@ -260,6 +260,27 @@ Novos usuários são criados pelo próprio admin, na barra lateral, em **Adminis
 
 Documentos processados antes da autenticação existir (histórico legado) são automaticamente atribuídos ao primeiro usuário admin criado, para não desaparecerem do histórico.
 
+### Sessão persistente
+
+Dar refresh na página, ou abrir a mesma URL em outra aba, não desloga mais o
+usuário. `st.session_state` do Streamlit é por conexão de navegador e não
+sobrevive a um reload — para contornar isso, o login gera um token de
+sessão (`services/auth_service.py`, `create_session`/`validate_session`,
+256 bits aleatórios, tabela `sessions` no SQLite com expiração) e o
+propaga via `st.query_params` (aparece como `?session=...` na URL). A cada
+carregamento da página, o token é validado contra o banco antes de exigir
+login novamente; no logout, a sessão é apagada do banco e o parâmetro
+removido da URL — reabrir um link antigo depois do logout não funciona mais.
+
+Trade-off deliberado: o token trafega na URL, não num cookie `httpOnly` —
+mais simples e 100% nativo do Streamlit (sem componente JS de terceiros,
+que se mostrou pouco confiável em teste), mas com um perfil de exposição
+diferente de um cookie (visível na barra de endereço, histórico do
+navegador). Mitigado por: token opaco (não revela nada sozinho), expiração
+em `SESSION_TTL_HOURS` (12h por padrão) e revogação no logout. Razoável
+para uma ferramenta interna; não seria a escolha certa para uma aplicação
+pública sensível a fraude.
+
 ---
 
 ## Proteção de dados pessoais

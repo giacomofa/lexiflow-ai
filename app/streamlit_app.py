@@ -9,7 +9,15 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
-from services.auth_service import ROLE_ADMIN, ROLE_BASIC, authenticate, create_user
+from services.auth_service import (
+    ROLE_ADMIN,
+    ROLE_BASIC,
+    authenticate,
+    create_session,
+    create_user,
+    delete_session,
+    validate_session,
+)
 from services.document_loader import load_document
 from services.text_preprocessor import preprocess_text
 from services.llm_analysis_service import analyze_document
@@ -73,11 +81,41 @@ def render_login_page():
                     user = authenticate(conn, username, password)
 
                 if user:
+                    with get_connection() as conn:
+                        token = create_session(conn, user["id"])
                     st.session_state["user"] = user
+                    st.session_state["session_token"] = token
+                    st.query_params["session"] = token
                     st.rerun()
                 else:
                     st.error("Usuário ou senha inválidos.")
 
+
+def _restore_session_from_query_params():
+    """Sessão persistente: sem isso, dar refresh na página ou abrir em outra
+    aba desloga o usuário, porque st.session_state é por conexão de
+    navegador, não sobrevive a um reload. O token trafega em
+    st.query_params (não num cookie httpOnly) — uma escolha deliberada para
+    uma ferramenta interna, mitigada por TTL curto (ver auth_service.py,
+    SESSION_TTL_HOURS) e por o token em si não revelar nada."""
+    if "user" in st.session_state:
+        return
+
+    token = st.query_params.get("session")
+    if not token:
+        return
+
+    with get_connection() as conn:
+        user = validate_session(conn, token)
+
+    if user:
+        st.session_state["user"] = user
+        st.session_state["session_token"] = token
+    else:
+        st.query_params.clear()
+
+
+_restore_session_from_query_params()
 
 if "user" not in st.session_state:
     render_login_page()
@@ -568,7 +606,13 @@ def render_history_page():
 st.sidebar.title("LexiFlow AI")
 st.sidebar.write(f"Usuário: **{current_user['username']}** ({current_user['role']})")
 if st.sidebar.button("Sair", key="logout_button"):
+    token = st.session_state.get("session_token")
+    if token:
+        with get_connection() as conn:
+            delete_session(conn, token)
+    st.query_params.clear()
     del st.session_state["user"]
+    st.session_state.pop("session_token", None)
     st.rerun()
 
 st.sidebar.divider()

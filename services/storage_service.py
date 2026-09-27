@@ -2,7 +2,7 @@ import json
 import sqlite3
 from pathlib import Path
 
-from services.auth_service import ROLE_ADMIN, ensure_default_admin, init_users_table
+from services.auth_service import ROLE_ADMIN, ensure_default_admin, init_sessions_table, init_users_table
 from services.encryption_service import decrypt_text, encrypt_text
 
 
@@ -70,6 +70,7 @@ def init_db():
 
         init_users_table(conn)
         ensure_default_admin(conn)
+        init_sessions_table(conn)
 
         _backfill_document_owners(conn)
 
