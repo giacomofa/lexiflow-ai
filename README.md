@@ -124,7 +124,7 @@ O projeto foi construído com:
 - **OpenAI API**
 - **python-dotenv**
 - **pypdf**
-- **reportlab**
+- **reportlab** (geração do relatório executivo em PDF)
 - **Pydantic** (validação da saída do LLM)
 - **pytest / unittest** (testes automatizados)
 - **bcrypt** (hash de senhas)
@@ -319,6 +319,60 @@ A análise estruturada pode incluir campos como:
 
 ---
 
+## Engenharia de prompt e uso da API (`services/llm_service.py`)
+
+Três decisões deliberadas na forma como o sistema conversa com o modelo:
+
+**1. Structured outputs, não parsing de string.** A chamada de análise usa
+`client.responses.parse(text_format=LLMAnalysisResult, ...)`, passando
+diretamente o modelo Pydantic de `services/schemas.py` como o schema
+esperado. A API garante que a saída bate com o schema (inclusive
+`document_type` como enum das categorias suportadas) antes mesmo de chegar
+no código — eliminou o parsing manual de markdown/JSON que existia antes
+(`_safe_json_loads`, removido) e a classe de falhas que vinha com ele.
+
+**2. `temperature=0`.** Classificar e extrair campos de um documento é uma
+tarefa que deveria ser determinística — o mesmo documento não deveria virar
+uma análise diferente a cada execução. As duas chamadas ao modelo (análise e
+perguntas e respostas) fixam `temperature=0` em vez de usar o padrão.
+
+**3. Delimitação explícita entre dado e instrução.** O texto do documento
+(e, na consulta, o contexto recuperado pelo RAG) é conteúdo de terceiros —
+um usuário poderia enviar um arquivo contendo texto que tenta se passar por
+uma instrução para o modelo ("ignore as regras anteriores e..."). O prompt
+agora delimita esse conteúdo explicitamente com tags (`<documento>...
+</documento>`, `<contexto_recuperado>...</contexto_recuperado>`), com uma
+regra clara de que tudo dentro da tag é dado a ser lido, nunca comando a ser
+seguido — e qualquer ocorrência literal da própria tag dentro do texto do
+usuário é neutralizada antes de entrar no prompt, para que um documento
+malicioso não consiga "fechar" a delimitação antes da hora
+(`services/llm_service.py`, `_wrap_as_data`). Testado manualmente com um
+documento contendo uma tentativa explícita de injeção de prompt — o modelo
+manteve o comportamento esperado nos dois fluxos (análise e perguntas e
+respostas) em vez de obedecer à instrução injetada.
+
+---
+
+## Relatório executivo em PDF
+
+Tanto na tela de Processar documento (logo após a análise) quanto em
+Consultar histórico (detalhes de um documento salvo) há um botão **Baixar
+relatório em PDF**. O relatório (`services/report_service.py`, via
+`reportlab`) traz tipo documental, resumo executivo, alertas e a análise
+estruturada em um documento de uma página, pronto para anexar a um e-mail ou
+apresentação — o tipo de entregável que um jurídico/administrativo leva para
+uma reunião, em vez de só uma tela do sistema.
+
+## Tratamento de erros
+
+Erros da API da OpenAI (limite de requisições, timeout, falha de conexão,
+indisponibilidade do serviço, chave inválida) são traduzidos em mensagens
+amigáveis em português (`services/error_messages.py`) em vez de expor a
+exceção técnica crua na tela — tanto no processamento de documentos quanto
+nas perguntas e respostas.
+
+---
+
 ## Perguntas e respostas
 
 A funcionalidade de consulta utiliza uma abordagem híbrida com:
@@ -425,6 +479,11 @@ módulos determinísticos (não dependem de chamada à API):
 - chunking do RAG por seção/cláusula (`rag/vector_store.py`)
 - construção determinística de `risk_alerts` (`services/llm_analysis_service.py`)
 - helpers de resposta e inferência de intenção (`services/query_service.py`)
+- autenticação e hashing de senha (`services/auth_service.py`)
+- categorização de vigência para a Visão geral (`services/portfolio_service.py`)
+- filtro de propriedade por usuário no storage (`services/storage_service.py`)
+- geração do relatório em PDF (`services/report_service.py`)
+- tradução de erros técnicos em mensagens amigáveis (`services/error_messages.py`)
 
 Para rodar:
 
@@ -474,13 +533,13 @@ definição, um acordo de confidencialidade é um documento privado — não
 existe um acervo público de NDAs reais para amostrar. Esse tipo continua
 validado apenas pelos exemplos sintéticos.
 
-### Resultado mais recente (34 casos, `eval/results/report_20260927_101914.json`)
+### Resultado mais recente (34 casos, `eval/results/report_20260927_115513.json`)
 
-- **31/34 casos aprovados (91,2%)**
+- **29/34 casos aprovados (85,3%)**
 - `document_type`: **97,1%** (33/34)
 - `has_penalty_clause`: **100%**
-- `has_confidentiality_clause`: **90%**
-- `personal_data_mentions`: **90%**
+- `has_confidentiality_clause`: **80%**
+- `personal_data_mentions`: **80%**
 
 Ao montar o lote de documentos reais, o próprio processo de avaliação expôs
 **dois erros no gabarito** (não no classificador): dois arquivos da Polícia
@@ -488,11 +547,24 @@ Federal foram rotulados por mim como "contrato" com base no nome do arquivo,
 mas na leitura completa um era na verdade um extrato de aditivo publicado no
 Diário Oficial e o outro um termo aditivo (o próprio título do documento
 dizia isso). Corrigido o gabarito, a acurácia de classificação subiu de
-94,1% para 97,1%. O único caso que continua como "falha" é intencional: um
-edital de licitação real que traz embutida, como anexo, uma minuta de
-contrato completa — o LLM classificou como contrato (defensável, já que boa
-parte do conteúdo é mesmo uma minuta contratual), mantido como divergência
-documentada em vez de forçado a "passar".
+94,1% para 97,1% e se manteve nesse patamar mesmo após a migração para
+structured outputs (ver seção seguinte). O único caso que continua como
+"falha" é intencional: um edital de licitação real que traz embutida, como
+anexo, uma minuta de contrato completa — o LLM classificou como contrato
+(defensável, já que boa parte do conteúdo é mesmo uma minuta contratual),
+mantido como divergência documentada em vez de forçado a "passar".
+
+`has_confidentiality_clause` e `personal_data_mentions` continuam sendo os
+campos mais instáveis entre execuções — já eram apontados como os mais
+interpretativos/ambíguos desde a primeira rodada (ver "Avaliação da
+solução" acima), e migrar para `temperature=0` não eliminou essa variação:
+são casos genuinamente de fronteira (ex.: uma política de segurança que
+fala em "credenciais" e "acesso restrito" pode ou não ser lida como uma
+cláusula de confidencialidade, dependendo de quão literal for a leitura),
+não um bug de parsing ou de prompt. Os relatórios anteriores
+(`eval/results/report_20260926_153128.json`, com 10 casos, e
+`report_20260927_101914.json`, com 34 casos antes da migração para
+structured outputs) ficam versionados para comparação histórica.
 
 O harness `eval/run_eval.py` roda a pipeline real (incluindo chamadas à API
 da OpenAI) sobre cada documento do gabarito, compara o resultado obtido com
@@ -518,6 +590,16 @@ LLM realmente aparece no texto original (`services/grounding.py`,
 `compute_field_confidence`). Isso torna visível, campo a campo, quando a
 extração pode ter se apoiado em inferência em vez de conteúdo explícito do
 documento.
+
+Esse sinal não fica só decorativo: quando um ou mais campos ficam com
+confiança baixa, o documento é sinalizado com **"⚠️ revisão pendente"** — no
+banner de detalhes, na lista de "Consultar histórico" e num alerta
+específico citando quais campos ficaram abaixo do limiar de confiança
+(`services/llm_analysis_service.py`, `low_confidence_fields`). Antes, esse
+sinal só existia como badge visual isolado; agora ele participa do mesmo
+`needs_review` que já reagia a classificação divergente e evidências não
+localizadas, e o resultado fica persistido no banco (não só na tela
+imediatamente após o processamento).
 
 ---
 

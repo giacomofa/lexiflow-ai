@@ -34,6 +34,15 @@ class CheckSnippetGroundingTests(unittest.TestCase):
         self.assertFalse(result["grounded"])
         self.assertEqual(result["match_type"], "none")
 
+    def test_snippet_wrapped_in_quotes_is_still_grounded(self):
+        """Regressão: o LLM às vezes devolve o snippet inteiro entre aspas
+        (ex.: '"aviso prévio de 30 dias"'), o que não deveria por si só
+        invalidar um trecho que de fato existe no documento."""
+        result = check_snippet_grounding('"aviso prévio de 30 dias"', self.source_text)
+
+        self.assertTrue(result["grounded"])
+        self.assertEqual(result["match_type"], "exact")
+
     def test_empty_snippet_is_not_grounded(self):
         result = check_snippet_grounding("", self.source_text)
 

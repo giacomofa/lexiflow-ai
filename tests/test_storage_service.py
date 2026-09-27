@@ -74,6 +74,36 @@ class StorageServiceUserFilteringTests(unittest.TestCase):
         self.assertEqual(len(overview_basic), 1)
         self.assertEqual(len(overview_admin), 2)
 
+    def test_needs_review_defaults_to_false_when_absent_from_result(self):
+        document = storage_service.get_document_by_id(self.doc_id_basic, self.basic_user_id, ROLE_BASIC)
+
+        self.assertFalse(document["needs_review"])
+
+    def test_needs_review_true_round_trips_through_list_and_get(self):
+        """Fecha o loop: um documento sinalizado para revisão (ex.: campo com
+        confiança baixa) precisa continuar marcado depois de salvo, não só na
+        renderização imediata após o processamento."""
+        doc_id = storage_service.save_document_analysis(
+            file_name="doc_precisa_revisao.txt",
+            document_text="texto 3",
+            result={
+                "document_type": "nda",
+                "summary": "resumo 3",
+                "alerts": ["1 campo com confiança baixa (penalty_clause) — recomenda-se revisão manual."],
+                "full_analysis": {},
+                "needs_review": True,
+            },
+            user_id=self.basic_user_id,
+        )
+
+        fetched = storage_service.get_document_by_id(doc_id, self.basic_user_id, ROLE_BASIC)
+        listed = storage_service.list_documents(self.basic_user_id, ROLE_BASIC)
+        listed_flags = {doc["id"]: doc["needs_review"] for doc in listed}
+
+        self.assertTrue(fetched["needs_review"])
+        self.assertTrue(listed_flags[doc_id])
+        self.assertFalse(listed_flags[self.doc_id_basic])
+
 
 if __name__ == "__main__":
     unittest.main()

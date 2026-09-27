@@ -15,7 +15,7 @@ um bug silencioso.
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -26,6 +26,19 @@ DOCUMENT_TYPES = {
     "aditivo_contratual",
     "fora_escopo",
 }
+
+# Mesmos valores de DOCUMENT_TYPES, como Literal: quando usado em
+# client.responses.parse(text_format=LLMAnalysisResult), isso vira um "enum"
+# no JSON Schema enviado à API, restringindo a própria geração do modelo às
+# categorias suportadas — em vez de aceitar qualquer string e só corrigir
+# depois no _validate_document_type.
+DocumentType = Literal[
+    "contrato_prestacao_servicos",
+    "nda",
+    "politica_interna",
+    "aditivo_contratual",
+    "fora_escopo",
+]
 
 _TRUE_STRINGS = {"sim", "true", "verdadeiro", "yes", "y", "s"}
 _FALSE_STRINGS = {"não", "nao", "false", "falso", "no", "n"}
@@ -63,7 +76,7 @@ class LLMAnalysisResult(BaseModel):
     """Representa a saída (já validada) de `analyze_document_with_llm`."""
 
     document_name: Optional[str] = None
-    document_type: str = "fora_escopo"
+    document_type: DocumentType = "fora_escopo"
     summary: Optional[str] = None
     parties: list[str] = Field(default_factory=list)
     object: Optional[str] = None
