@@ -124,7 +124,7 @@ O projeto foi construído com:
 - **OpenAI API**
 - **python-dotenv**
 - **pypdf**
-- **reportlab**
+- **reportlab** (geração do relatório executivo em PDF)
 - **Pydantic** (validação da saída do LLM)
 - **pytest / unittest** (testes automatizados)
 - **bcrypt** (hash de senhas)
@@ -319,6 +319,26 @@ A análise estruturada pode incluir campos como:
 
 ---
 
+## Relatório executivo em PDF
+
+Tanto na tela de Processar documento (logo após a análise) quanto em
+Consultar histórico (detalhes de um documento salvo) há um botão **Baixar
+relatório em PDF**. O relatório (`services/report_service.py`, via
+`reportlab`) traz tipo documental, resumo executivo, alertas e a análise
+estruturada em um documento de uma página, pronto para anexar a um e-mail ou
+apresentação — o tipo de entregável que um jurídico/administrativo leva para
+uma reunião, em vez de só uma tela do sistema.
+
+## Tratamento de erros
+
+Erros da API da OpenAI (limite de requisições, timeout, falha de conexão,
+indisponibilidade do serviço, chave inválida) são traduzidos em mensagens
+amigáveis em português (`services/error_messages.py`) em vez de expor a
+exceção técnica crua na tela — tanto no processamento de documentos quanto
+nas perguntas e respostas.
+
+---
+
 ## Perguntas e respostas
 
 A funcionalidade de consulta utiliza uma abordagem híbrida com:
@@ -425,6 +445,11 @@ módulos determinísticos (não dependem de chamada à API):
 - chunking do RAG por seção/cláusula (`rag/vector_store.py`)
 - construção determinística de `risk_alerts` (`services/llm_analysis_service.py`)
 - helpers de resposta e inferência de intenção (`services/query_service.py`)
+- autenticação e hashing de senha (`services/auth_service.py`)
+- categorização de vigência para a Visão geral (`services/portfolio_service.py`)
+- filtro de propriedade por usuário no storage (`services/storage_service.py`)
+- geração do relatório em PDF (`services/report_service.py`)
+- tradução de erros técnicos em mensagens amigáveis (`services/error_messages.py`)
 
 Para rodar:
 

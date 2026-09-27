@@ -29,6 +29,8 @@ from services.storage_service import (
     list_documents_for_indexing,
 )
 from services.query_service import answer_question_from_document
+from services.error_messages import describe_error
+from services.report_service import generate_pdf_report
 from rag.vector_store import index_document
 
 sys.path.append(str(Path(__file__).resolve().parent))
@@ -371,8 +373,24 @@ def render_process_page():
                         f"Documento processado, salvo e indexado com sucesso. Chunks criados: {chunk_count}"
                     )
 
+                pdf_bytes = generate_pdf_report({
+                    "id": document_id,
+                    "file_name": uploaded_file.name,
+                    "document_type": result["document_type"],
+                    "summary": result["summary"],
+                    "alerts": result["alerts"],
+                    "full_analysis": result.get("full_analysis", {}),
+                })
+                st.download_button(
+                    "Baixar relatório em PDF",
+                    data=pdf_bytes,
+                    file_name=f"relatorio_lexiflow_{document_id}.pdf",
+                    mime="application/pdf",
+                    key="download_report_process_page",
+                )
+
         except Exception as e:
-            st.error(f"Erro ao processar o documento: {e}")
+            st.error(describe_error(e))
 
 
 def render_history_page():
@@ -428,6 +446,18 @@ def render_history_page():
 
     render_structured_analysis(selected_doc.get("full_analysis", {}))
 
+    try:
+        pdf_bytes = generate_pdf_report(selected_doc)
+        st.download_button(
+            "Baixar relatório em PDF",
+            data=pdf_bytes,
+            file_name=f"relatorio_lexiflow_{selected_doc['id']}.pdf",
+            mime="application/pdf",
+            key=f"download_report_history_{selected_doc['id']}",
+        )
+    except Exception as e:
+        st.warning(f"Não foi possível gerar o PDF do relatório: {describe_error(e)}")
+
     st.text_area(
         "Texto completo do documento",
         value=selected_doc["document_text"],
@@ -452,23 +482,28 @@ def render_history_page():
 
         if st.button("Responder pergunta", key="answer_button"):
             if user_question.strip():
-                with st.spinner("Buscando evidências e gerando resposta..."):
-                    qa_result = answer_question_from_document(
-                        selected_doc["id"],
-                        selected_doc["file_name"],
-                        user_question,
-                        selected_doc.get("full_analysis", {})
-                    )
+                try:
+                    with st.spinner("Buscando evidências e gerando resposta..."):
+                        qa_result = answer_question_from_document(
+                            selected_doc["id"],
+                            selected_doc["file_name"],
+                            user_question,
+                            selected_doc.get("full_analysis", {})
+                        )
+                except Exception as e:
+                    st.error(describe_error(e))
+                    qa_result = None
 
-                st.write("**Resposta:**")
-                st.write(qa_result["answer"])
+                if qa_result:
+                    st.write("**Resposta:**")
+                    st.write(qa_result["answer"])
 
-                if qa_result["evidence"]:
-                    st.write("**Evidências encontradas:**")
-                    for evidence in qa_result["evidence"]:
-                        st.write(f"- {evidence}")
-                else:
-                    st.write("**Evidências:** Nenhum trecho relevante foi encontrado.")
+                    if qa_result["evidence"]:
+                        st.write("**Evidências encontradas:**")
+                        for evidence in qa_result["evidence"]:
+                            st.write(f"- {evidence}")
+                    else:
+                        st.write("**Evidências:** Nenhum trecho relevante foi encontrado.")
             else:
                 st.warning("Digite uma pergunta antes de continuar.")
 
