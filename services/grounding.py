@@ -10,9 +10,15 @@ from difflib import SequenceMatcher
 _FUZZY_MATCH_THRESHOLD = 0.8
 _WINDOW_SLACK = 20
 
+# aspas retas e curvas que o LLM às vezes usa para "citar" um trecho como um
+# todo (ex.: '"cláusula de multa..."'); sem remover isso, um snippet
+# genuinamente correto pode falhar o match só por causa das aspas ao redor.
+_SURROUNDING_QUOTE_CHARS = "\"'“”‘’«»"
+
 
 def _normalize(text: str) -> str:
-    return re.sub(r"\s+", " ", text or "").strip().lower()
+    normalized = re.sub(r"\s+", " ", text or "").strip().lower()
+    return normalized.strip(_SURROUNDING_QUOTE_CHARS)
 
 
 def _best_fuzzy_ratio(snippet: str, source_text: str) -> float:
