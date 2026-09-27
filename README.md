@@ -129,6 +129,7 @@ O projeto foi construído com:
 - **pytest / unittest** (testes automatizados)
 - **bcrypt** (hash de senhas)
 - **pandas** (tabelas/gráficos da Visão geral)
+- **cryptography** (criptografia em repouso do texto dos documentos)
 
 ---
 
@@ -258,6 +259,43 @@ Na primeira execução (banco `data/lexiflow.db` vazio), o sistema cria automati
 Novos usuários são criados pelo próprio admin, na barra lateral, em **Administração → Criar novo usuário**.
 
 Documentos processados antes da autenticação existir (histórico legado) são automaticamente atribuídos ao primeiro usuário admin criado, para não desaparecerem do histórico.
+
+---
+
+## Proteção de dados pessoais
+
+O sistema já identificava quando um documento menciona dados pessoais
+(`personal_data_mentions`), mas identificar não é o mesmo que proteger.
+Duas camadas foram adicionadas para isso:
+
+**1. Criptografia em repouso.** O texto integral do documento
+(`document_text`) e a análise estruturada (`full_analysis_json`) — que pode
+conter `personal_data_details` citado verbatim — ficam cifrados no SQLite
+(`services/encryption_service.py`, `Fernet`/AES simétrico). As demais
+colunas (resumo, tipo, alertas) continuam em texto plano, para permitir
+listagem/dashboard sem precisar decifrar em massa.
+
+A chave vem de `LEXIFLOW_ENCRYPTION_KEY` (recomendado em produção — defina
+nos secrets do Streamlit Community Cloud) ou, se ausente, é gerada
+automaticamente na primeira execução e salva em `data/.encryption_key`
+(fora do controle de versão). **Se essa chave for perdida, os documentos já
+salvos ficam permanentemente ilegíveis** — em produção, prefira sempre a
+variável de ambiente a depender do arquivo local, especialmente em hospedagem
+com filesystem efêmero. Registros salvos antes desta camada existir
+continuam legíveis normalmente (fallback automático para texto plano).
+
+**2. Exclusão permanente (direito de eliminação).** Antes não havia nenhuma
+forma de remover um documento já processado. Agora, tanto o dono do
+documento quanto um admin podem excluí-lo permanentemente na tela de
+Consultar histórico (com confirmação em duas etapas) — remove o registro do
+SQLite e os chunks correspondentes no Chroma.
+
+**Limitação conhecida:** os chunks indexados no Chroma para busca semântica
+(`data/chroma_db/`) continuam em texto plano — criptografá-los quebraria a
+busca por similaridade, que precisa comparar embeddings calculados sobre o
+texto real. A exclusão remove os chunks do documento excluído, mas enquanto
+um documento existe, seu conteúdo é pesquisável em texto plano nesse índice
+vetorial. Isso é documentado aqui em vez de omitido.
 
 ---
 
@@ -630,6 +668,7 @@ Esta versão do projeto não contempla:
 - monitoramento enterprise em produção
 - cobertura ampla de outros tipos documentais
 - governança completa de acesso e auditoria
+- criptografia dos chunks indexados no Chroma (o texto salvo no SQLite é cifrado, mas o índice de busca semântica continua em texto plano — ver "Proteção de dados pessoais")
 
 O projeto foi intencionalmente delimitado para manter foco, clareza e profundidade no problema escolhido.
 

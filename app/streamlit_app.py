@@ -27,11 +27,12 @@ from services.storage_service import (
     list_documents_for_overview,
     get_document_by_id,
     list_documents_for_indexing,
+    delete_document,
 )
 from services.query_service import answer_question_from_document
 from services.error_messages import describe_error
 from services.report_service import generate_pdf_report
-from rag.vector_store import index_document
+from rag.vector_store import index_document, delete_document_chunks
 
 sys.path.append(str(Path(__file__).resolve().parent))
 from theme import (  # noqa: E402
@@ -531,6 +532,37 @@ def render_history_page():
                         st.write("**Evidências:** Nenhum trecho relevante foi encontrado.")
             else:
                 st.warning("Digite uma pergunta antes de continuar.")
+
+    st.divider()
+    st.subheader("Excluir documento")
+    st.caption(
+        "Remove permanentemente o texto, a análise e os alertas deste documento (inclusive "
+        "do índice de busca semântica). Use para exercer o direito de eliminação de dados "
+        "pessoais quando o documento não precisar mais ficar no histórico. Essa ação não pode ser desfeita."
+    )
+
+    confirm_key = f"confirm_delete_{selected_doc['id']}"
+
+    if st.session_state.get(confirm_key):
+        st.warning("Tem certeza? Essa ação é permanente e não pode ser desfeita.")
+        confirm_col, cancel_col = st.columns(2)
+
+        with confirm_col:
+            if st.button("Confirmar exclusão permanente", key=f"confirm_delete_button_{selected_doc['id']}"):
+                delete_document(selected_doc["id"], current_user["id"], current_user["role"])
+                delete_document_chunks(selected_doc["id"])
+                st.session_state.pop(confirm_key, None)
+                st.success("Documento excluído.")
+                st.rerun()
+
+        with cancel_col:
+            if st.button("Cancelar", key=f"cancel_delete_button_{selected_doc['id']}"):
+                st.session_state.pop(confirm_key, None)
+                st.rerun()
+    else:
+        if st.button("Excluir documento", key=f"delete_button_{selected_doc['id']}"):
+            st.session_state[confirm_key] = True
+            st.rerun()
 
 
 st.sidebar.title("LexiFlow AI")

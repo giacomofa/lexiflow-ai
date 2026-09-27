@@ -3,4 +3,5 @@
 __pycache__/
 data/chroma_db/
 data/*.db
+data/.encryption_key
 *.pyc
