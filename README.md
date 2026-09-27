@@ -317,6 +317,11 @@ A análise estruturada pode incluir campos como:
 - `risk_alerts`
 - `source_snippets`
 
+Além do que o LLM extrai, `full_analysis` também carrega metadados
+adicionados pelo próprio sistema (não pelo modelo): `field_confidence` (ver
+"Confiança por campo extraído") e `prompt_version` / `model` (ver
+"Engenharia de prompt e uso da API", a seguir).
+
 ---
 
 ## Engenharia de prompt e uso da API (`services/llm_service.py`)
@@ -350,6 +355,18 @@ malicioso não consiga "fechar" a delimitação antes da hora
 documento contendo uma tentativa explícita de injeção de prompt — o modelo
 manteve o comportamento esperado nos dois fluxos (análise e perguntas e
 respostas) em vez de obedecer à instrução injetada.
+
+**4. Versionamento do prompt.** `ANALYSIS_PROMPT_VERSION` (hoje `"v1"`) é
+salvo junto de cada análise, dentro do próprio `full_analysis` (campos
+`prompt_version` e `model`) — visível na tela de detalhes do documento, no
+relatório em PDF e no cabeçalho de cada relatório gerado por
+`eval/run_eval.py`. Sem isso, uma análise salva no banco ou um relatório de
+avaliação antigo eram "mudos": não davam para saber, meses depois, se uma
+mudança de resultado veio de um ajuste no prompt, de uma atualização
+silenciosa do modelo do lado da OpenAI, ou de uma regressão real — os três
+ficavam indistinguíveis. O número deve subir (`"v2"`, `"v3"`...) sempre que
+o conteúdo do `system_prompt` de `analyze_document_with_llm` mudar de forma
+que possa afetar o resultado.
 
 ---
 

@@ -350,6 +350,12 @@ def render_process_page():
                     f"**Tipo do documento:** {render_document_type_badge(result['document_type'])}",
                     unsafe_allow_html=True,
                 )
+
+                prompt_version = result.get("full_analysis", {}).get("prompt_version")
+                if prompt_version:
+                    model = result.get("full_analysis", {}).get("model", "")
+                    st.caption(f"Gerado com prompt {prompt_version}" + (f" · modelo {model}" if model else ""))
+
                 st.write(f"**Resumo executivo:** {result['summary']}")
 
                 if result["document_type"] == "fora_escopo":
@@ -440,6 +446,12 @@ def render_history_page():
     st.write(f"**Arquivo:** {selected_doc['file_name']}")
     st.markdown(f"**Tipo:** {render_document_type_badge(selected_doc['document_type'])}", unsafe_allow_html=True)
     st.write(f"**Processado em:** {selected_doc['created_at']}")
+
+    prompt_version = selected_doc.get("full_analysis", {}).get("prompt_version")
+    if prompt_version:
+        model = selected_doc.get("full_analysis", {}).get("model", "")
+        st.caption(f"Gerado com prompt {prompt_version}" + (f" · modelo {model}" if model else ""))
+
     st.write(f"**Resumo:** {selected_doc['summary']}")
 
     if selected_doc["document_type"] == "fora_escopo":
