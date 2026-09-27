@@ -366,14 +366,19 @@ Recomenda-se manter uma pasta `sample_docs/` com documentos usados para:
 - calibração inicial do MVP
 - avaliação expandida
 - testes de robustez fora do escopo
+- avaliação em documentos reais e inéditos (base pública ampliada)
 
-Uma organização possível é:
+Organização atual:
 
 ```text
 sample_docs/
-├── calibracao/
-├── avaliacao_expandida/
-└── fora_escopo/
+├── calibracao/              # documentos fictícios usados para ajustar o prompt
+├── avaliacao_expandida/     # documentos fictícios inéditos (checagem pós-calibração)
+├── fora_escopo/             # documentos fictícios fora do escopo do MVP
+└── base_publica_ampliada/   # 24 documentos REAIS de portais de transparência
+                             # (nunca vistos durante o ajuste do sistema — ver
+                             # eval/gabarito.json, campo "basis": "real_publico",
+                             # com a fonte de cada um em "source")
 ```
 
 ---
@@ -400,6 +405,12 @@ Dois documentos fora do escopo utilizados para validar:
 - classificação correta como `fora_escopo`
 - aviso na interface
 - bloqueio da funcionalidade de perguntas
+
+### 4. Base pública ampliada (held-out real)
+24 documentos reais de portais de transparência do governo brasileiro,
+nunca vistos durante o desenvolvimento do prompt — ver detalhes na seção
+"Avaliação automatizada fim a fim" abaixo. É a base que sustenta a alegação
+de generalização, em vez de apenas regressão sobre casos já conhecidos.
 
 ---
 
@@ -432,10 +443,56 @@ A suíte também roda automaticamente em todo push/PR via GitHub Actions (`.gith
 ## Avaliação automatizada fim a fim (`eval/`)
 
 A avaliação da solução deixou de ser feita manualmente em planilha. O
-gabarito estruturado está em `eval/gabarito.json`: cada caso aponta para um
-documento em `sample_docs/` e traz os valores esperados para os campos
-objetivamente verificáveis (`document_type`, `personal_data_mentions`,
-presença de cláusula de multa e de confidencialidade).
+gabarito estruturado está em `eval/gabarito.json`, com **34 casos** em duas
+bases distintas (campo `basis` de cada caso):
+
+- **`sintetico_novalex`** (10 casos): os documentos fictícios da NovaLex
+  usados desde o início do projeto. Gabarito completo — `document_type`,
+  `personal_data_mentions`, presença de cláusula de multa e de
+  confidencialidade.
+- **`real_publico`** (24 casos): documentos **reais**, baixados de portais
+  de transparência do governo brasileiro (Polícia Federal, MEC, prefeituras
+  de Niterói/Ribeirão Preto/Francisco Beltrão, CIASC, CODERP, Suape, BNB,
+  ITI, Biblioteca Nacional, entre outros — a fonte de cada um está no campo
+  `source` do gabarito). Gabarito apenas de `document_type`, porque validar
+  os demais campos exigiria ler cláusula por cláusula de cada um.
+
+### Por que separar as duas bases (calibração vs. held-out)
+
+Um ponto levantado na avaliação do case: medir a acurácia de um sistema nos
+**mesmos documentos** usados para ajustar o prompt tende a inflar o
+resultado — é uma forma de overfitting do prompt ao conjunto de teste, não
+uma prova de generalização. Os documentos `sintetico_novalex` foram, em
+parte, usados durante a calibração original do prompt; os 24 documentos
+`real_publico` nunca foram vistos durante nenhum ajuste do sistema, servindo
+como um conjunto genuinamente *held-out*. É essa segunda base que sustenta a
+alegação de generalização — a primeira serve principalmente como regressão
+(o sistema continua se comportando como esperado nos casos que já conhece).
+
+Observação importante: a base `real_publico` **não inclui NDA**. Por
+definição, um acordo de confidencialidade é um documento privado — não
+existe um acervo público de NDAs reais para amostrar. Esse tipo continua
+validado apenas pelos exemplos sintéticos.
+
+### Resultado mais recente (34 casos, `eval/results/report_20260927_101914.json`)
+
+- **31/34 casos aprovados (91,2%)**
+- `document_type`: **97,1%** (33/34)
+- `has_penalty_clause`: **100%**
+- `has_confidentiality_clause`: **90%**
+- `personal_data_mentions`: **90%**
+
+Ao montar o lote de documentos reais, o próprio processo de avaliação expôs
+**dois erros no gabarito** (não no classificador): dois arquivos da Polícia
+Federal foram rotulados por mim como "contrato" com base no nome do arquivo,
+mas na leitura completa um era na verdade um extrato de aditivo publicado no
+Diário Oficial e o outro um termo aditivo (o próprio título do documento
+dizia isso). Corrigido o gabarito, a acurácia de classificação subiu de
+94,1% para 97,1%. O único caso que continua como "falha" é intencional: um
+edital de licitação real que traz embutida, como anexo, uma minuta de
+contrato completa — o LLM classificou como contrato (defensável, já que boa
+parte do conteúdo é mesmo uma minuta contratual), mantido como divergência
+documentada em vez de forçado a "passar".
 
 O harness `eval/run_eval.py` roda a pipeline real (incluindo chamadas à API
 da OpenAI) sobre cada documento do gabarito, compara o resultado obtido com

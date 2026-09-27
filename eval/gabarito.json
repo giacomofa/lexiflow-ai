@@ -1,9 +1,10 @@
 {
-  "_readme": "Gabarito estruturado para avaliação automatizada do LexiFlow AI. Cada entrada aponta para um documento em sample_docs/ e traz os valores esperados para os campos objetivamente verificáveis (document_type, personal_data_mentions, has_penalty_clause, has_confidentiality_clause). Campos em texto livre (summary, datas, obrigações) não entram no gabarito por serem naturalmente variáveis na redação do LLM; a avaliação desses campos continua exigindo leitura humana das amostras em eval/results/. Este gabarito foi derivado por leitura manual do conteúdo de cada documento em sample_docs/, substituindo a planilha de avaliação manual anterior.",
+  "_readme": "Gabarito estruturado para avaliação automatizada do LexiFlow AI. Cada entrada aponta para um documento em sample_docs/ e traz os valores esperados para os campos verificáveis. Duas bases distintas (campo 'basis'): 'sintetico_novalex' são os documentos fictícios da NovaLex usados desde a calibração original, com gabarito completo (document_type, personal_data_mentions, has_penalty_clause, has_confidentiality_clause); 'real_publico' são documentos reais baixados de portais de transparência do governo brasileiro (nunca vistos durante o ajuste do prompt), com gabarito apenas de document_type — validar os demais campos exigiria ler cláusula por cláusula de cada um, o que não escala. Campos em texto livre (summary, datas, obrigações) não entram no gabarito por serem naturalmente variáveis na redação do LLM. A base 'real_publico' não inclui NDA: por natureza um NDA é um documento confidencial, então não existe um acervo público de NDAs reais para amostrar — esse tipo continua validado apenas pelos exemplos sintéticos.",
   "cases": [
     {
       "id": "calibracao_contrato_alphatech",
       "file_path": "sample_docs/calibracao/contrato_teste_lexiflow.txt",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "contrato_prestacao_servicos",
         "personal_data_mentions": true,
@@ -15,6 +16,7 @@
     {
       "id": "calibracao_politica_protecao_dados",
       "file_path": "sample_docs/calibracao/politica_teste_lexiflow.pdf",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "politica_interna",
         "personal_data_mentions": true,
@@ -26,6 +28,7 @@
     {
       "id": "avaliacao_nda_inovadata",
       "file_path": "sample_docs/avaliacao_expandida/nda_parceria_inovadata.txt",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "nda",
         "personal_data_mentions": true,
@@ -37,6 +40,7 @@
     {
       "id": "avaliacao_contrato_consultoria_orbit",
       "file_path": "sample_docs/avaliacao_expandida/contrato_consultoria_analytics_orbit.txt",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "contrato_prestacao_servicos",
         "personal_data_mentions": false,
@@ -48,6 +52,7 @@
     {
       "id": "avaliacao_contrato_flexassist",
       "file_path": "sample_docs/avaliacao_expandida/contrato_servicos_administrativos_flexassist.txt",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "contrato_prestacao_servicos",
         "personal_data_mentions": true,
@@ -59,6 +64,7 @@
     {
       "id": "avaliacao_aditivo_alphatech",
       "file_path": "sample_docs/avaliacao_expandida/aditivo_contrato_alphatech_prazo_multa.pdf",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "aditivo_contratual",
         "personal_data_mentions": true,
@@ -70,6 +76,7 @@
     {
       "id": "avaliacao_politica_retencao",
       "file_path": "sample_docs/avaliacao_expandida/politica_retencao_documental_novalex.pdf",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "politica_interna",
         "personal_data_mentions": true,
@@ -81,6 +88,7 @@
     {
       "id": "avaliacao_politica_seguranca",
       "file_path": "sample_docs/avaliacao_expandida/politica_seguranca_informacao_novalex.pdf",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "politica_interna",
         "personal_data_mentions": false,
@@ -92,6 +100,7 @@
     {
       "id": "fora_escopo_ata_reuniao",
       "file_path": "sample_docs/fora_escopo/ata_reuniao_comercial_novalex.txt",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "fora_escopo",
         "personal_data_mentions": false,
@@ -103,6 +112,7 @@
     {
       "id": "fora_escopo_relatorio_indicadores",
       "file_path": "sample_docs/fora_escopo/relatorio_indicadores_operacionais_q1.pdf",
+      "basis": "sintetico_novalex",
       "expected": {
         "document_type": "fora_escopo",
         "personal_data_mentions": false,
@@ -110,6 +120,198 @@
         "has_confidentiality_clause": false
       },
       "notes": "Relatório de indicadores operacionais; não é um tipo suportado pelo MVP."
+    },
+    {
+      "id": "real_contrato_pf_ditec_2026",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_ditec_2026.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2026/diretoria-tecnico-cientifica-ditec/contratos/contrato-e-publicacao.pdf",
+      "expected": { "document_type": "contrato_prestacao_servicos" },
+      "notes": "Contrato administrativo real da Polícia Federal (DITEC), publicado no portal de licitações."
+    },
+    {
+      "id": "real_fora_escopo_extrato_dou_pf_acre",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_acre_2025.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2025/acre/contratos/inpdfviewer-3.pdf",
+      "expected": { "document_type": "fora_escopo" },
+      "notes": "Corrigido após 1ª rodada: não é um contrato, é um extrato de termo aditivo/apostilamento publicado no Diário Oficial (página com vários atos administrativos, não um instrumento contratual único). O rótulo original ('contrato_prestacao_servicos') estava errado — erro de montagem do gabarito, não do classificador, identificado justamente por causa da divergência do modelo."
+    },
+    {
+      "id": "real_contrato_pf_saopaulo_2023",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_saopaulo_2023.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2023/sao-paulo/contratos/contrato_assinado-1.pdf",
+      "expected": { "document_type": "contrato_prestacao_servicos" },
+      "notes": "Termo de contrato real da Superintendência Regional da Polícia Federal em São Paulo."
+    },
+    {
+      "id": "real_contrato_pf_pernambuco_2026",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_pernambuco_2026.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2026/pernambuco/contratos/sei_147178286_contrato.pdf",
+      "expected": { "document_type": "contrato_prestacao_servicos" },
+      "notes": "Contrato real de distribuição/publicidade legal da Polícia Federal em Pernambuco."
+    },
+    {
+      "id": "real_contrato_pf_ditec_sei_2025",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_ditec_sei_2025.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2026/diretoria-tecnico-cientifica-ditec/contratos/sei_08201-001851_2025_81.pdf",
+      "expected": { "document_type": "contrato_prestacao_servicos" },
+      "notes": "Contrato administrativo real da Polícia Federal (DITEC), processo SEI."
+    },
+    {
+      "id": "real_contrato_pf_riodejaneiro_2023",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_riodejaneiro_2023.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2023/rio-de-janeiro/contratos/sei_30655035_contrato.pdf",
+      "expected": { "document_type": "contrato_prestacao_servicos" },
+      "notes": "Contrato administrativo real da Superintendência Regional da Polícia Federal no Rio de Janeiro."
+    },
+    {
+      "id": "real_aditivo_pf_ceara_2026",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_ceara_2026.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2026/ceara/contratos/sei_144790815_contrato.pdf",
+      "expected": { "document_type": "aditivo_contratual" },
+      "notes": "Corrigido após 1ª rodada: o próprio título do documento é 'PRIMEIRO TERMO ADITIVO AO CONTRATO 05/2025 - SR/PF/CE' — é um aditivo, não um contrato novo. O rótulo original estava errado — erro de montagem do gabarito, não do classificador."
+    },
+    {
+      "id": "real_contrato_mj_isolacustic",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_mj_pregao2018.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/mj/pt-br/acesso-a-informacao/licitacoes-e-contratos/licitacoes/ministerio-da-justica/pregao/2018/collective-nitf-content-9/AnexoRespostaContrato.pdf",
+      "expected": { "document_type": "contrato_prestacao_servicos" },
+      "notes": "Contrato real entre duas empresas privadas (não é o governo como parte), anexado como comprovação de capacidade técnica num processo licitatório público do Ministério da Justiça. Bom caso de teste: contrato real, mas fora do padrão 'CONTRATANTE = órgão público' dos demais desta base."
+    },
+    {
+      "id": "real_aditivo_mec_05_2025",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_mec_05_2025.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/mec/pt-br/media/licitacao/contratos/SEI23000.032846_202066.pdf",
+      "expected": { "document_type": "aditivo_contratual" },
+      "notes": "Termo aditivo nº 05/2025 real do Ministério da Educação."
+    },
+    {
+      "id": "real_aditivo_niteroi_2025",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_niteroi_001_2025.pdf",
+      "basis": "real_publico",
+      "source": "https://seplag.niteroi.rj.gov.br/wp-content/uploads/2025/11/Termo-Aditivo-001-2025.pdf",
+      "expected": { "document_type": "aditivo_contratual" },
+      "notes": "Termo aditivo real de prorrogação de vigência, prefeitura de Niterói/RJ."
+    },
+    {
+      "id": "real_aditivo_pf_amazonas",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_pf_amazonas_3o.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2020/amazonas/termos-aditivos/contrato-no-04-2018-sr-pf-am-3o-termo-aditivo/ar28_12_2020_141218.pdf",
+      "expected": { "document_type": "aditivo_contratual" },
+      "notes": "3º termo aditivo real ao contrato nº 04/2018 da Polícia Federal no Amazonas."
+    },
+    {
+      "id": "real_aditivo_pf_sergipe_1",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_pf_sergipe_1o_2020.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2020/sergipe/contratos-2020-1/contrato-no-01-2020-sr-pf-se/sei_pf-17332584-termo-aditivo.pdf",
+      "expected": { "document_type": "aditivo_contratual" },
+      "notes": "Termo aditivo real (SEI) da Polícia Federal em Sergipe."
+    },
+    {
+      "id": "real_aditivo_pf_sergipe_2",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_pf_sergipe_2o_2020.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/pf/pt-br/assuntos/licitacoes/2020/sergipe/contratos-2020-1/contrato-no-05-2020-sr-pf-se/sei_pf-23334076-termo.pdf",
+      "expected": { "document_type": "aditivo_contratual" },
+      "notes": "Segundo termo aditivo real (SEI) da Polícia Federal em Sergipe."
+    },
+    {
+      "id": "real_politica_bn_posin",
+      "file_path": "sample_docs/base_publica_ampliada/politica_bn_posin_2022.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/bn/pt-br/acesso-a-informacao-2/acoes-e-programas/governanca/Posin2022.pdf",
+      "expected": { "document_type": "politica_interna" },
+      "notes": "Política de Segurança da Informação (POSIN) real da Fundação Biblioteca Nacional."
+    },
+    {
+      "id": "real_politica_ciasc",
+      "file_path": "sample_docs/base_publica_ampliada/politica_ciasc_seguranca_informacao.pdf",
+      "basis": "real_publico",
+      "source": "https://ciasc.sc.gov.br/wp-content/uploads/2023/01/Politica-de-Seguranca-da-Informacao-CIASC-v2.4-29.10.2020.pdf",
+      "expected": { "document_type": "politica_interna" },
+      "notes": "Política de Segurança da Informação real do CIASC (Santa Catarina)."
+    },
+    {
+      "id": "real_politica_coderp",
+      "file_path": "sample_docs/base_publica_ampliada/politica_coderp_seguranca_informacao.pdf",
+      "basis": "real_publico",
+      "source": "https://www.coderp.sp.gov.br/portal/pdf/coderp05202104.pdf",
+      "expected": { "document_type": "politica_interna" },
+      "notes": "Política de Segurança da Informação real do CODERP (São Paulo)."
+    },
+    {
+      "id": "real_politica_suape",
+      "file_path": "sample_docs/base_publica_ampliada/politica_suape_seguranca_informacao.pdf",
+      "basis": "real_publico",
+      "source": "https://www.lai.pe.gov.br/suape/wp-content/uploads/sites/21/2022/07/PSI-POLITICA-DE-SEGURANCA-DA-INFORMACAO-SUAPE-2020-1.pdf",
+      "expected": { "document_type": "politica_interna" },
+      "notes": "Política de Segurança da Informação real do Porto de Suape (Pernambuco)."
+    },
+    {
+      "id": "real_politica_bnb_compliance",
+      "file_path": "sample_docs/base_publica_ampliada/politica_bnb_compliance.pdf",
+      "basis": "real_publico",
+      "source": "https://bnb.gov.br/documents/45843/505531/Pol%C3%ADtica+de+Controles+Internos+e+Compliance.pdf",
+      "expected": { "document_type": "politica_interna" },
+      "notes": "Política de Controles Internos e Compliance real do Banco do Nordeste do Brasil (BNB)."
+    },
+    {
+      "id": "real_politica_iti_integridade",
+      "file_path": "sample_docs/base_publica_ampliada/politica_iti_integridade.pdf",
+      "basis": "real_publico",
+      "source": "https://www.gov.br/iti/pt-br/acesso-a-informacao/institucional/Programa_de_Integridade_e_Compliance___Assinado_1.pdf",
+      "expected": { "document_type": "politica_interna" },
+      "notes": "Programa de Integridade e Compliance real do ITI (Instituto Nacional de Tecnologia da Informação)."
+    },
+    {
+      "id": "real_fora_escopo_ata_franciscobeltrao",
+      "file_path": "sample_docs/base_publica_ampliada/ata_franciscobeltrao_concidade.pdf",
+      "basis": "real_publico",
+      "source": "https://franciscobeltrao.pr.gov.br/uploads/_old_files/2026/04/ATA-70-1.pdf",
+      "expected": { "document_type": "fora_escopo" },
+      "notes": "Ata real de reunião do Conselho da Cidade (Concidade) de Francisco Beltrão/PR."
+    },
+    {
+      "id": "real_fora_escopo_ata_ribeiraopreto",
+      "file_path": "sample_docs/base_publica_ampliada/ata_ribeiraopreto_combea.pdf",
+      "basis": "real_publico",
+      "source": "https://www.ribeiraopreto.sp.gov.br/portal/pdf/combea38202306.pdf",
+      "expected": { "document_type": "fora_escopo" },
+      "notes": "Ata real de reunião do Conselho Municipal do Bem Estar Animal (COMBEA) de Ribeirão Preto/SP."
+    },
+    {
+      "id": "real_fora_escopo_ata_uberaba",
+      "file_path": "sample_docs/base_publica_ampliada/ata_uberaba_conselho.pdf",
+      "basis": "real_publico",
+      "source": "http://www.uberaba.mg.gov.br/portal/acervo/ipserv/arquivos/Ata%20Reuniao%20Conselho%20Administrativo%2013_8_10.pdf",
+      "expected": { "document_type": "fora_escopo" },
+      "notes": "Ata real de reunião do conselho administrativo do IPSERV (Uberaba/MG)."
+    },
+    {
+      "id": "real_fora_escopo_edital_jati",
+      "file_path": "sample_docs/base_publica_ampliada/edital_jati_ce.pdf",
+      "basis": "real_publico",
+      "source": "https://jati.ce.gov.br/wp-content/uploads/2021/04/Edital-Pregao-Eletronico-No-20213103005.pdf",
+      "expected": { "document_type": "fora_escopo" },
+      "notes": "Edital real de pregão eletrônico (Jati/CE) — caso difícil intencional: estruturalmente parecido com contrato (partes, objeto), mas é um edital de licitação, não um contrato firmado nem um dos 4 tipos suportados."
+    },
+    {
+      "id": "real_fora_escopo_edital_codata",
+      "file_path": "sample_docs/base_publica_ampliada/edital_codata_pb.pdf",
+      "basis": "real_publico",
+      "source": "https://codata.pb.gov.br/institucional/editais-concursos/editalpe001-2025.pdf",
+      "expected": { "document_type": "fora_escopo" },
+      "notes": "Edital real de pregão eletrônico (CODATA/PB). Caso ambíguo por natureza: o PDF do edital traz embutido, como Anexo II, uma 'Minuta de Contrato' completa — ou seja, o mesmo arquivo mistura um edital de licitação com um contrato-modelo. O LLM classificou como contrato_prestacao_servicos, o que é defensável dado que boa parte do conteúdo é de fato uma minuta contratual; o gabarito manteve fora_escopo por ser a natureza predominante/primária do documento (um edital, não um contrato assinado). Mantido como FAIL intencional para documentar essa ambiguidade, não como erro de classificação a corrigir."
     }
   ]
 }
