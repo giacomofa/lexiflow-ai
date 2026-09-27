@@ -1,0 +1,796 @@
+{
+  "generated_at": "2026-09-27T10:19:14.779259+00:00",
+  "total_cases": 34,
+  "passed_cases": 31,
+  "pass_rate": 0.912,
+  "field_accuracy": {
+    "document_type": 0.971,
+    "personal_data_mentions": 0.9,
+    "has_penalty_clause": 1.0,
+    "has_confidentiality_clause": 0.9
+  },
+  "cases": [
+    {
+      "id": "calibracao_contrato_alphatech",
+      "file_path": "sample_docs/calibracao/contrato_teste_lexiflow.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços de TI entre NovaLex Servicos Corporativos LTDA e AlphaTech Solucoes em TI LTDA. Define monitoramento de infraestrutura, suporte tecnico e manutencao preventiva. Estabelece vigencia de 12 meses, renovacao por acordo expresso e rescisao com aviso previo. Prevê multa por rescisao antecipada sem justa causa e obrigações de confidencialidade e tratamento de dados pessoais."
+    },
+    {
+      "id": "calibracao_politica_protecao_dados",
+      "file_path": "sample_docs/calibracao/politica_teste_lexiflow.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais."
+      ],
+      "needs_review": false,
+      "summary": "Documento de politica interna sobre protecao de dados pessoais. Estabelece diretrizes de coleta, acesso, uso, armazenamento e descarte de dados. Define principios, responsabilidades, retencao, descarte seguro e comunicacao de incidentes."
+    },
+    {
+      "id": "avaliacao_nda_inovadata",
+      "file_path": "sample_docs/avaliacao_expandida/nda_parceria_inovadata.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "nda",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "nda",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de confidencialidade.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Acordo de confidencialidade entre NovaLex e InovaData para compartilhamento de informações sobre potencial parceria comercial e tecnológica. Estabelece sigilo, excecoes de confidencialidade e uso restrito das informacoes. Vigencia de 24 meses a partir da assinatura. Nao ha multa pecuniaria expressa. Menciona tratamento eventual de dados pessoais com medidas de seguranca."
+    },
+    {
+      "id": "avaliacao_contrato_consultoria_orbit",
+      "file_path": "sample_docs/avaliacao_expandida/contrato_consultoria_analytics_orbit.txt",
+      "passed": false,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": false,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços de consultoria em analytics entre NovaLex e Orbit Analytics. O objeto envolve indicadores gerenciais, dashboards executivos e consolidação de dados. Há vigência de 6 meses, com renovação por aditivo e rescisão com aviso prévio de 15 dias. O documento traz cláusula de confidencialidade e menciona que não há tratamento de dados pessoais como atividade central."
+    },
+    {
+      "id": "avaliacao_contrato_flexassist",
+      "file_path": "sample_docs/avaliacao_expandida/contrato_servicos_administrativos_flexassist.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços administrativos entre NovaLex Serviços Corporativos LTDA e FlexAssist Apoio Administrativo LTDA. Define apoio administrativo, vigência de 18 meses, renovação automática e possibilidade de rescisão com aviso prévio. Prevê multa por descumprimento grave e cláusula de confidencialidade. Menciona tratamento mínimo de dados cadastrais de colaboradores e fornecedores."
+    },
+    {
+      "id": "avaliacao_aditivo_alphatech",
+      "file_path": "sample_docs/avaliacao_expandida/aditivo_contrato_alphatech_prazo_multa.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "actual": {
+        "document_type": "aditivo_contratual",
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Não foi identificada vigência/prazo claro no documento."
+      ],
+      "needs_review": false,
+      "summary": "Aditivo contratual entre NovaLex Serviços Corporativos LTDA e AlphaTech Soluções em TI LTDA. Prorroga a vigência do contrato principal até 30/06/2027. Altera a cláusula de multa para rescisão antecipada sem justa causa. Mantém as demais disposições, incluindo confidencialidade e proteção de dados."
+    },
+    {
+      "id": "avaliacao_politica_retencao",
+      "file_path": "sample_docs/avaliacao_expandida/politica_retencao_documental_novalex.pdf",
+      "passed": false,
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": true,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": true
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": false
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Política interna da NovaLex que define diretrizes para guarda, retenção, acesso e descarte de documentos corporativos. Estabelece abrangência sobre diversos tipos documentais e exige controles adicionais para arquivos com dados pessoais. Prevê atualização da tabela de temporalidade e descarte seguro ao fim do prazo de retenção."
+    },
+    {
+      "id": "avaliacao_politica_seguranca",
+      "file_path": "sample_docs/avaliacao_expandida/politica_seguranca_informacao_novalex.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "politica_interna",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [],
+      "needs_review": false,
+      "summary": "Documento interno da NovaLex que estabelece princípios e controles mínimos de segurança da informação. Define regras de acesso, proteção de credenciais, tratamento de informações sensíveis e reporte de incidentes. Prevê uso aceitável dos recursos tecnológicos apenas para fins corporativos autorizados. Indica que o descumprimento pode gerar medidas administrativas internas."
+    },
+    {
+      "id": "fora_escopo_ata_reuniao",
+      "file_path": "sample_docs/fora_escopo/ata_reuniao_comercial_novalex.txt",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual."
+      ],
+      "needs_review": false,
+      "summary": "O documento é uma ata de reunião comercial, com pauta, resumo, decisões e encerramento. Não se enquadra nas categorias suportadas pelo MVP, como contrato, NDA, política interna ou aditivo contratual."
+    },
+    {
+      "id": "fora_escopo_relatorio_indicadores",
+      "file_path": "sample_docs/fora_escopo/relatorio_indicadores_operacionais_q1.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "actual": {
+        "document_type": "fora_escopo",
+        "personal_data_mentions": false,
+        "has_penalty_clause": false,
+        "has_confidentiality_clause": false
+      },
+      "field_matches": {
+        "document_type": true,
+        "personal_data_mentions": true,
+        "has_penalty_clause": true,
+        "has_confidentiality_clause": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual."
+      ],
+      "needs_review": false,
+      "summary": "Documento de relatório interno com consolidação de indicadores operacionais do primeiro trimestre de 2026. Não se trata de contrato, NDA, política interna ou aditivo contratual."
+    },
+    {
+      "id": "real_contrato_pf_ditec_2026",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_ditec_2026.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Contrato administrativo entre a União, por intermédio da Diretoria Técnico-Científica da Polícia Federal, e a ESPLANADA SERVIÇOS TERCEIRIZADOS LTDA. O objeto é a prestação de serviços de assistente administrativo com dedicação exclusiva de mão de obra. A vigência é de 01/07/2026 a 01/07/2027, com possibilidade de prorrogação por até 10 anos. O documento prevê obrigações detalhadas das partes, regras de LGPD e extinção contratual."
+    },
+    {
+      "id": "real_fora_escopo_extrato_dou_pf_acre",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_acre_2025.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo"
+      },
+      "actual": {
+        "document_type": "fora_escopo"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual.",
+        "Documento menciona tratamento de dados pessoais.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "O texto fornecido reúne extratos publicados em diário oficial sobre contratos, aditivos, apostilamentos, rescisão e edital. Não se trata de um único instrumento contratual completo, nem de um documento claramente enquadrado no MVP."
+    },
+    {
+      "id": "real_contrato_pf_saopaulo_2023",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_saopaulo_2023.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Termo de contrato gratuito entre a Polícia Federal em São Paulo e o Consórcio Shopping Center Iguatemi Ribeirão Preto. O objeto é a cessão de espaço e infraestrutura para instalação e funcionamento do Posto de Emissão de Passaportes. A vigência é de 30 meses, prorrogável até 60 meses. Há obrigações detalhadas, cláusula de sanções e previsão de rescisão conforme a Lei 8.666/93."
+    },
+    {
+      "id": "real_contrato_pf_pernambuco_2026",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_pernambuco_2026.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual."
+      ],
+      "needs_review": false,
+      "summary": "Contrato entre a Superintendência Regional de Polícia Federal em Pernambuco e a EBC para distribuição de publicidade legal impressa e/ou eletrônica. Prevê vigência de 60 meses, a partir de 28/09/2026, com possibilidade de prorrogação. Define obrigações de envio, publicação, pagamento, reajuste, rescisão e sanções. Há menção expressa à proteção de dados pessoais e ao foro da Justiça Federal em Brasília/DF."
+    },
+    {
+      "id": "real_contrato_pf_ditec_sei_2025",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_ditec_sei_2025.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Contrato administrativo entre a Polícia Federal DITEC e a empresa INTERPRISE INSTRUMENTOS ANALITICOS LTDA. O objeto é a aquisição de insumos da marca NANOPORE OXFORD para execução de projeto de pesquisa. A vigência é de 6 meses contados da assinatura, com prorrogação automática se o objeto não for concluído. Há cláusulas sobre obrigações, LGPD, extinção contratual e ausência de garantia de execução."
+    },
+    {
+      "id": "real_contrato_pf_riodejaneiro_2023",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_riodejaneiro_2023.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento contém cláusula de multa contratual."
+      ],
+      "needs_review": false,
+      "summary": "Contrato administrativo entre a Polícia Federal no Rio de Janeiro e a Burtontec Energia e Construcoes Ltda. Tem por objeto a contratação de serviço comum de engenharia. A vigência é de 6 meses, a partir da assinatura. Prevê possibilidade de rescisao, subcontratacao parcial e sanções conforme o Termo de Referencia."
+    },
+    {
+      "id": "real_aditivo_pf_ceara_2026",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_pf_ceara_2026.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual"
+      },
+      "actual": {
+        "document_type": "aditivo_contratual"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual.",
+        "3 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Termo aditivo de contrato administrativo que prorroga a vigência do Contrato 05/2025 por mais 12 meses. Estabelece o novo período de vigência e mantém as demais cláusulas do contrato original. Também trata de preço, garantia da execução e programa de integridade."
+    },
+    {
+      "id": "real_contrato_mj_isolacustic",
+      "file_path": "sample_docs/base_publica_ampliada/contrato_mj_pregao2018.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual."
+      ],
+      "needs_review": false,
+      "summary": "Contrato de prestação de serviços para fornecimento de materiais e instalação de isolamento acústico. Define partes, preço, forma de pagamento, prazo de execução e regras de rescisão e multa. Inclui anexo com itens e quantitativos dos serviços."
+    },
+    {
+      "id": "real_aditivo_mec_05_2025",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_mec_05_2025.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual"
+      },
+      "actual": {
+        "document_type": "aditivo_contratual"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [],
+      "needs_review": false,
+      "summary": "Termo aditivo entre o Ministério da Educação e a Digisystem Serviços Especializados Ltda. Prorroga a vigência do Contrato nº 06/2022 por 12 meses. Mantém as demais cláusulas do contrato original. Prevê renovação de garantia contratual pela contratada. Indica valor total estimado da contratação e dotação orçamentária."
+    },
+    {
+      "id": "real_aditivo_niteroi_2025",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_niteroi_001_2025.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual"
+      },
+      "actual": {
+        "document_type": "aditivo_contratual"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Termo aditivo que prorroga a vigência do Contrato nº 01/25 por 97 dias corridos. Define novo prazo final em 30 de janeiro de 2026 e mantém as demais cláusulas do contrato original. Prevê renovação de garantia e regras de penalidade em caso de atraso na sua apresentação."
+    },
+    {
+      "id": "real_aditivo_pf_amazonas",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_pf_amazonas_3o.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual"
+      },
+      "actual": {
+        "document_type": "aditivo_contratual"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais."
+      ],
+      "needs_review": false,
+      "summary": "Termo aditivo celebrado entre a Polícia Federal no Amazonas e a empresa G Refrigeração. O documento prorroga a vigência do contrato de manutenção de condicionadores de ar. Mantém o valor global anual estimado em R$ 125.760,00. As demais cláusulas do contrato original permanecem inalteradas."
+    },
+    {
+      "id": "real_aditivo_pf_sergipe_1",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_pf_sergipe_1o_2020.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual"
+      },
+      "actual": {
+        "document_type": "aditivo_contratual"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [],
+      "needs_review": false,
+      "summary": "Termo aditivo ao contrato de prestação de serviços nº 01/2020-SR/PF/SE entre a Polícia Federal em Sergipe e a empresa Ideias Turismo Eireli. O instrumento prorroga a vigência contratual por 12 meses. As demais cláusulas do contrato original permanecem ratificadas."
+    },
+    {
+      "id": "real_aditivo_pf_sergipe_2",
+      "file_path": "sample_docs/base_publica_ampliada/aditivo_pf_sergipe_2o_2020.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "aditivo_contratual"
+      },
+      "actual": {
+        "document_type": "aditivo_contratual"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Termo aditivo entre a Polícia Federal em Sergipe e a empresa JMAR Serviços e Eventos EIRELI. O documento tem como objeto a prorrogação da vigência contratual. O prazo foi estendido por 12 meses, de 02/06/2022 a 01/06/2023. As demais cláusulas do contrato original foram ratificadas."
+    },
+    {
+      "id": "real_politica_bn_posin",
+      "file_path": "sample_docs/base_publica_ampliada/politica_bn_posin_2022.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna"
+      },
+      "actual": {
+        "document_type": "politica_interna"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Documento que institui a Política de Segurança da Informação da Fundação Biblioteca Nacional. Define diretrizes para proteção de informações, ativos e uso de recursos de TI. Estabelece responsabilidades, controles, monitoramento e penalidades por descumprimento. Inclui referências a proteção de dados pessoais e revisão periódica da política."
+    },
+    {
+      "id": "real_politica_ciasc",
+      "file_path": "sample_docs/base_publica_ampliada/politica_ciasc_seguranca_informacao.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna"
+      },
+      "actual": {
+        "document_type": "politica_interna"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Política de Segurança da Informação do CIASC, com diretrizes para proteger confidencialidade, integridade, disponibilidade e autenticidade das informações. Define responsabilidades, controles de acesso, gestão de riscos, incidentes, auditoria, uso de dispositivos e relacionamento com fornecedores. Também prevê regras de atualização, aprovação e sanções por violações."
+    },
+    {
+      "id": "real_politica_coderp",
+      "file_path": "sample_docs/base_publica_ampliada/politica_coderp_seguranca_informacao.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna"
+      },
+      "actual": {
+        "document_type": "politica_interna"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Documento de política interna de segurança da informação da CODERP. Define diretrizes, controles e responsabilidades para proteção das informações. Aplica-se a empregados e prestadores de serviços. Trata de acesso, monitoramento, senhas, internet, datacenter e engenharia social. Versão indicada no documento: ano 2020."
+    },
+    {
+      "id": "real_politica_suape",
+      "file_path": "sample_docs/base_publica_ampliada/politica_suape_seguranca_informacao.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna"
+      },
+      "actual": {
+        "document_type": "politica_interna"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Documento de Política de Segurança da Informação de Suape. Estabelece princípios, diretrizes, responsabilidades e controles de acesso e backup. Abrange colaboradores, terceiros e demais usuários de sistemas e informações de Suape. Também prevê penalidades por transgressões e menção a políticas complementares. Não há relação contratual de prestação de serviços, NDA ou aditivo."
+    },
+    {
+      "id": "real_politica_bnb_compliance",
+      "file_path": "sample_docs/base_publica_ampliada/politica_bnb_compliance.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna"
+      },
+      "actual": {
+        "document_type": "politica_interna"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Documento interno do BNB que estabelece princípios, diretrizes e responsabilidades para controles internos e compliance. Define estrutura de governança, linhas de defesa, atribuições e reporte. Também disciplina acesso a informações, coordenação das atividades e exigências de manutenção documental. Foi aprovada pelo Conselho de Administração em 15.06.2021."
+    },
+    {
+      "id": "real_politica_iti_integridade",
+      "file_path": "sample_docs/base_publica_ampliada/politica_iti_integridade.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "politica_interna"
+      },
+      "actual": {
+        "document_type": "politica_interna"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [],
+      "needs_review": false,
+      "summary": "Manual do ITI sobre Programa de Integridade e Compliance. Apresenta conceitos, pilares, gestão de riscos, monitoramento e medidas de integridade. Descreve responsabilidades internas, anexo de riscos e boas práticas. Não é um contrato nem um aditivo; trata-se de política/manual institucional."
+    },
+    {
+      "id": "real_fora_escopo_ata_franciscobeltrao",
+      "file_path": "sample_docs/base_publica_ampliada/ata_franciscobeltrao_concidade.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo"
+      },
+      "actual": {
+        "document_type": "fora_escopo"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual.",
+        "Documento menciona tratamento de dados pessoais.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Ata de reunião do Conselho da Cidade de Francisco Beltrão, com deliberações sobre diversos processos de alvará, zoneamento, subdivisão e recuos. O documento registra discussões e decisões administrativas urbanísticas, não se enquadrando nas categorias contratuais suportadas pelo MVP."
+    },
+    {
+      "id": "real_fora_escopo_ata_ribeiraopreto",
+      "file_path": "sample_docs/base_publica_ampliada/ata_ribeiraopreto_combea.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo"
+      },
+      "actual": {
+        "document_type": "fora_escopo"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual.",
+        "Documento menciona tratamento de dados pessoais."
+      ],
+      "needs_review": false,
+      "summary": "Documento é uma ata de reunião ordinária do Conselho Municipal do Bem Estar Animal - COMBEA. Não se trata de contrato, NDA, política interna ou aditivo contratual. Contém deliberações, votação de conselheira e encaminhamentos de pauta."
+    },
+    {
+      "id": "real_fora_escopo_ata_uberaba",
+      "file_path": "sample_docs/base_publica_ampliada/ata_uberaba_conselho.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo"
+      },
+      "actual": {
+        "document_type": "fora_escopo"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual.",
+        "Documento menciona tratamento de dados pessoais.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual.",
+        "1 trecho(s) de evidência citados pelo LLM não foram localizados no texto original do documento — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Documento classificado como fora de escopo por se tratar de uma ata de reunião ordinária de conselho administrativo, e não de contrato, NDA, política interna ou aditivo contratual."
+    },
+    {
+      "id": "real_fora_escopo_edital_jati",
+      "file_path": "sample_docs/base_publica_ampliada/edital_jati_ce.pdf",
+      "passed": true,
+      "expected": {
+        "document_type": "fora_escopo"
+      },
+      "actual": {
+        "document_type": "fora_escopo"
+      },
+      "field_matches": {
+        "document_type": true
+      },
+      "alerts": [
+        "Documento fora do escopo do MVP atual.",
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Classificação divergente entre o LLM e a checagem por palavras-chave — recomenda-se revisão manual."
+      ],
+      "needs_review": true,
+      "summary": "Documento de licitação na modalidade pregão eletrônico para aquisição de cestas básicas. Não se enquadra claramente nas categorias suportadas de contrato, NDA, política interna ou aditivo contratual. Contém regras do certame, habilitação, prazos e minuta de contrato."
+    },
+    {
+      "id": "real_fora_escopo_edital_codata",
+      "file_path": "sample_docs/base_publica_ampliada/edital_codata_pb.pdf",
+      "passed": false,
+      "expected": {
+        "document_type": "fora_escopo"
+      },
+      "actual": {
+        "document_type": "contrato_prestacao_servicos"
+      },
+      "field_matches": {
+        "document_type": false
+      },
+      "alerts": [
+        "Documento menciona tratamento de dados pessoais.",
+        "Documento contém cláusula de multa contratual.",
+        "Documento contém cláusula de confidencialidade."
+      ],
+      "needs_review": false,
+      "summary": "Documento de licitação e minuta contratual da CODATA para contratação de serviços de suporte técnico, transferência de conhecimento e desenvolvimento sob demanda na plataforma ADABAS/NATURAL. Define regras do pregão, habilitação, execução, pagamento, sanções, proteção de dados e vigência contratual. Também traz anexos com termo de referência e minuta de contrato. Há tratamento expresso de confidencialidade e proteção de dados pessoais."
+    }
+  ]
+}

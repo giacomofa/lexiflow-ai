@@ -18,6 +18,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+# Em alguns terminais Windows (cmd/PowerShell com codepage legado), imprimir
+# acentos no console pode lançar UnicodeEncodeError e derrubar o script antes
+# de terminar. Força a saída padrão para UTF-8 para evitar isso.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -28,7 +34,12 @@ from services.text_preprocessor import preprocess_text  # noqa: E402
 GABARITO_PATH = Path(__file__).resolve().parent / "gabarito.json"
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 
-_CHECKED_FIELDS = ("document_type", "personal_data_mentions", "has_penalty_clause", "has_confidentiality_clause")
+# Nem todo caso do gabarito precisa checar os 4 campos: alguns (ex.: o lote de
+# documentos públicos reais) só têm gabarito de document_type, porque validar
+# os demais campos exigiria ler cláusula por cláusula de cada documento. O
+# harness calcula actual/field_matches apenas para os campos presentes em
+# `case["expected"]`, sem quebrar os casos que já têm gabarito completo.
+_ALL_FIELDS = ("document_type", "personal_data_mentions", "has_penalty_clause", "has_confidentiality_clause")
 
 
 def load_gabarito() -> list[dict]:
@@ -52,14 +63,15 @@ def evaluate_case(case: dict) -> dict:
     result = analyze_document(text, Path(file_path).name)
     full_analysis = result.get("full_analysis", {})
 
-    actual = {
+    actual_all = {
         "document_type": result.get("document_type"),
         "personal_data_mentions": full_analysis.get("personal_data_mentions"),
         "has_penalty_clause": bool(full_analysis.get("penalty_clause")),
         "has_confidentiality_clause": bool(full_analysis.get("confidentiality_clause")),
     }
 
-    field_matches = {field: actual[field] == expected[field] for field in _CHECKED_FIELDS}
+    actual = {field: actual_all[field] for field in expected}
+    field_matches = {field: actual[field] == expected[field] for field in expected}
     passed = all(field_matches.values())
 
     return {
@@ -102,8 +114,12 @@ def run() -> dict:
     passed = sum(1 for r in case_results if r.get("passed"))
 
     field_accuracy = {}
-    for field in _CHECKED_FIELDS:
-        matches = [r["field_matches"][field] for r in case_results if "field_matches" in r]
+    for field in _ALL_FIELDS:
+        matches = [
+            r["field_matches"][field]
+            for r in case_results
+            if "field_matches" in r and field in r["field_matches"]
+        ]
         field_accuracy[field] = round(sum(matches) / len(matches), 3) if matches else None
 
     report = {
