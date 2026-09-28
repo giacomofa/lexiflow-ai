@@ -133,6 +133,16 @@ Nome do arquivo:
         temperature=TEMPERATURE,
     )
 
+    if response.output_parsed is None:
+        # A API devolve output_parsed=None quando o modelo recusa produzir a
+        # saída estruturada ou a resposta fica incompleta/truncada — sem essa
+        # checagem, o .model_dump() abaixo derruba com um AttributeError cru.
+        raise ValueError(
+            "O modelo de IA não conseguiu gerar uma análise estruturada para este documento "
+            "(resposta recusada ou incompleta). Tente novamente; se persistir, o documento pode "
+            "ser muito longo ou conter conteúdo que o modelo se recusa a processar."
+        )
+
     parsed = response.output_parsed.model_dump()
     sanitized = sanitize_analysis_payload(parsed)
 

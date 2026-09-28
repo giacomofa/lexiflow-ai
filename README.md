@@ -260,6 +260,32 @@ Novos usuários são criados pelo próprio admin, na barra lateral, em **Adminis
 
 Documentos processados antes da autenticação existir (histórico legado) são automaticamente atribuídos ao primeiro usuário admin criado, para não desaparecerem do histórico.
 
+### Sessão persistente
+
+Dar refresh na página, ou abrir a mesma URL em outra aba, não desloga mais o
+usuário. `st.session_state` do Streamlit é por conexão de navegador e não
+sobrevive a um reload — para contornar isso, o login gera um token de
+sessão (`services/auth_service.py`, `create_session`/`validate_session`,
+256 bits aleatórios, tabela `sessions` no SQLite com expiração) e o
+propaga via `st.query_params` (aparece como `?session=...` na URL). O token é
+validado contra o banco no primeiro carregamento da página **e** periodicamente
+a cada `SESSION_REVALIDATION_INTERVAL_SECONDS` (5 min por padrão) enquanto a
+aba permanece aberta — sem essa revalidação periódica, uma sessão revogada
+(logout em outro lugar, TTL expirado, usuário excluído) continuaria sendo
+aceita indefinidamente numa aba já aberta, já que `st.session_state`
+sobrevive a reruns dentro da mesma conexão. No logout, a sessão é apagada do
+banco e o parâmetro removido da URL — reabrir um link antigo depois do
+logout não funciona mais.
+
+Trade-off deliberado: o token trafega na URL, não num cookie `httpOnly` —
+mais simples e 100% nativo do Streamlit (sem componente JS de terceiros,
+que se mostrou pouco confiável em teste), mas com um perfil de exposição
+diferente de um cookie (visível na barra de endereço, histórico do
+navegador). Mitigado por: token opaco (não revela nada sozinho), expiração
+em `SESSION_TTL_HOURS` (12h por padrão) e revogação no logout. Razoável
+para uma ferramenta interna; não seria a escolha certa para uma aplicação
+pública sensível a fraude.
+
 ---
 
 ## Proteção de dados pessoais
@@ -655,6 +681,55 @@ sinal só existia como badge visual isolado; agora ele participa do mesmo
 `needs_review` que já reagia a classificação divergente e evidências não
 localizadas, e o resultado fica persistido no banco (não só na tela
 imediatamente após o processamento).
+
+---
+
+## Revisão de código e correções de robustez
+
+Depois de todo o desenvolvimento acima, o projeto passou por uma revisão de
+código dedicada (múltiplos agentes analisando o diff completo por ângulos
+diferentes — correção, comportamento removido, rastreamento entre arquivos,
+reuso, simplificação, eficiência, altitude — cada achado confirmado por um
+segundo agente antes de virar correção). Encontrado e corrigido:
+
+- **XSS armazenado**: campos extraídos pelo LLM (`object`, `termination_clause`
+  etc.) eram renderizados via `st.markdown(..., unsafe_allow_html=True)` sem
+  escapar o texto — um documento com HTML/JS embutido na cláusula executaria
+  na tela de quem visualizasse a análise. Corrigido com `escape()` em
+  `render_text` (`app/streamlit_app.py`).
+- **Relatório em PDF quebrando ou perdendo texto**: `reportlab.Paragraph`
+  exige escapar `&`/`<`/`>` manualmente; texto do LLM contendo esses
+  caracteres causava exceção não tratada ou descarte silencioso de trecho do
+  relatório. Corrigido escapando todo texto antes de virar `Paragraph`
+  (`services/report_service.py`).
+- **Análise quebrando em recusa/truncamento do modelo**: `response.output_parsed`
+  pode vir `None` (recusa ou resposta incompleta); o código assumia que
+  nunca seria `None` e derrubava com `AttributeError` cru. Corrigido com uma
+  checagem explícita que vira uma mensagem amigável (`services/llm_service.py`).
+- **Exclusão de documento sem tratamento de erro**: o retorno de
+  `delete_document` era ignorado e os chunks do Chroma eram sempre apagados,
+  mesmo se a exclusão no SQLite falhasse — risco de exclusão parcial que
+  minava o próprio recurso de "direito de eliminação". Corrigido com
+  checagem do retorno e tratamento de exceção em cada etapa.
+- **Sessão não revalidada em abas já abertas**: TTL e revogação só eram
+  checados no primeiro carregamento da página, não a cada interação numa aba
+  que ficasse aberta. Corrigido com revalidação periódica (ver "Sessão
+  persistente" acima).
+- **Reindexação sem checagem de perfil na camada de serviço** e
+  **chunks órfãos no Chroma ao reindexar** (quando o novo chunking gera menos
+  pedaços que uma indexação anterior): corrigidos em
+  `services/storage_service.py` e `rag/vector_store.py`.
+- **Mensagem de erro genérica vazando exceção crua**: o fallback de
+  `describe_error` interpolava a exceção técnica direto na tela, contrariando
+  o propósito do próprio módulo. Agora o detalhe vai para o log do servidor,
+  e a tela mostra uma mensagem genérica seria.
+- **Rótulos de tipo documental divergentes**: a UI mostrava "NDA" e o PDF
+  mostrava "NDA (acordo de confidencialidade)" para o mesmo documento, porque
+  os dois mapas eram mantidos independentemente. Unificados em
+  `services/document_types.py`.
+- **`init_db()` reexecutando a cada interação**: Streamlit reexecuta o script
+  inteiro a cada clique; a inicialização do banco agora roda uma única vez
+  por processo via `st.cache_resource`.
 
 ---
 

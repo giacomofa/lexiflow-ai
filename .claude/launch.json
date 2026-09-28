@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "lexiflow-streamlit",
-      "runtimeExecutable": "D:\\projetos\\lexiflow-ai\\.venv\\Scripts\\python.exe",
+      "runtimeExecutable": "D:/projetos/lexiflow-ai/.venv/Scripts/python.exe",
       "runtimeArgs": ["-m", "streamlit", "run", "app/streamlit_app.py", "--server.headless", "true"],
       "port": 8501
     }

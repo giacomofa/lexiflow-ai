@@ -74,13 +74,17 @@ class DescribeErrorTests(unittest.TestCase):
 
         self.assertEqual(message, "Formato de arquivo não suportado. Use PDF ou TXT.")
 
-    def test_unknown_error_falls_back_to_generic_message_with_detail(self):
-        exc = RuntimeError("algo muito específico quebrou")
+    def test_unknown_error_falls_back_to_generic_safe_message(self):
+        """Regressão: a mensagem genérica não pode vazar o texto cru da
+        exceção (poderia conter caminho de arquivo, nome de tabela/coluna
+        etc. para um usuário sem privilégio nenhum). O detalhe técnico vai
+        pro log do servidor, não pra tela."""
+        exc = RuntimeError("algo muito específico e sensível quebrou")
 
         message = describe_error(exc)
 
         self.assertIn("erro inesperado", message)
-        self.assertIn("algo muito específico quebrou", message)
+        self.assertNotIn("algo muito específico e sensível quebrou", message)
 
 
 if __name__ == "__main__":
