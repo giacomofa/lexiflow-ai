@@ -4,6 +4,7 @@ Geração de relatório executivo em PDF a partir da análise de um documento.
 from __future__ import annotations
 
 import io
+from xml.sax.saxutils import escape as _xml_escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -19,19 +20,13 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from services.document_types import DOCUMENT_TYPE_LABELS
+
 NAVY = colors.HexColor("#1F3A5F")
 LIGHT_GRAY = colors.HexColor("#F4F6FA")
 BORDER_GRAY = colors.HexColor("#E3E8EF")
 TEXT_COLOR = colors.HexColor("#1A2233")
 MUTED_TEXT = colors.HexColor("#5B6472")
-
-DOCUMENT_TYPE_LABELS = {
-    "contrato_prestacao_servicos": "Contrato de prestação de serviços",
-    "nda": "NDA (acordo de confidencialidade)",
-    "politica_interna": "Política interna",
-    "aditivo_contratual": "Aditivo contratual",
-    "fora_escopo": "Fora do escopo do MVP",
-}
 
 FIELD_LABELS = (
     ("parties", "Partes envolvidas", "list"),
@@ -73,6 +68,19 @@ def _styles():
             "LexiflowFooter", parent=base["Normal"], textColor=MUTED_TEXT, fontSize=8, leading=11,
         ),
     }
+
+
+def _paragraph_text(text: str) -> str:
+    """Escapa texto antes de entrar num reportlab.Paragraph.
+
+    Paragraph interpreta um subconjunto de marcação XML/HTML no próprio
+    texto (para permitir <b>, <i> etc. deliberados); texto vindo do LLM ou
+    do documento original pode conter '&', '<' ou '>' incidentais (ex.: uma
+    cláusula citando "Empresa A & Empresa B" ou "valor < R$ 5.000"), o que
+    faz o parser do reportlab levantar exceção ou descartar trecho do texto
+    silenciosamente se não for escapado antes.
+    """
+    return _xml_escape(str(text))
 
 
 def _format_field_value(value, kind: str) -> str | None:
@@ -138,13 +146,13 @@ def generate_pdf_report(document: dict) -> bytes:
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("Resumo executivo", styles["h2"]))
-    story.append(Paragraph(document.get("summary") or "Resumo não identificado.", styles["body"]))
+    story.append(Paragraph(_paragraph_text(document.get("summary") or "Resumo não identificado."), styles["body"]))
 
     alerts = document.get("alerts") or []
     story.append(Paragraph("Alertas identificados", styles["h2"]))
     if alerts:
         story.append(ListFlowable(
-            [ListItem(Paragraph(alert, styles["alert"]), bulletColor=NAVY) for alert in alerts],
+            [ListItem(Paragraph(_paragraph_text(alert), styles["alert"]), bulletColor=NAVY) for alert in alerts],
             bulletType="bullet",
             start="circle",
             leftIndent=12,
@@ -161,7 +169,10 @@ def generate_pdf_report(document: dict) -> bytes:
     if structured_rows:
         story.append(Paragraph("Análise estruturada", styles["h2"]))
         table = Table(
-            [[Paragraph(f"<b>{label}</b>", styles["body"]), Paragraph(value, styles["body"])] for label, value in structured_rows],
+            [
+                [Paragraph(f"<b>{_paragraph_text(label)}</b>", styles["body"]), Paragraph(_paragraph_text(value), styles["body"])]
+                for label, value in structured_rows
+            ],
             colWidths=[4 * cm, None],
         )
         table.setStyle(TableStyle([

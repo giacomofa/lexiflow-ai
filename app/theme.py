@@ -9,6 +9,8 @@ import html
 
 import streamlit as st
 
+from services.document_types import DOCUMENT_TYPE_LABELS
+
 # nomes de arquivo e outros valores digitados/enviados pelo usuário precisam
 # ser escapados antes de entrar em qualquer HTML renderizado com
 # unsafe_allow_html=True (badges e tabelas usam HTML "confiável" gerado por
@@ -35,11 +37,11 @@ STATUS_BADGES = {
 }
 
 DOCUMENT_TYPE_BADGES = {
-    "contrato_prestacao_servicos": {"label": "Contrato de prestação de serviços", "palette": "navy"},
-    "nda": {"label": "NDA", "palette": "purple"},
-    "politica_interna": {"label": "Política interna", "palette": "teal"},
-    "aditivo_contratual": {"label": "Aditivo contratual", "palette": "orange"},
-    "fora_escopo": {"label": "Fora do escopo", "palette": "neutral"},
+    "contrato_prestacao_servicos": {"label": DOCUMENT_TYPE_LABELS["contrato_prestacao_servicos"], "palette": "navy"},
+    "nda": {"label": DOCUMENT_TYPE_LABELS["nda"], "palette": "purple"},
+    "politica_interna": {"label": DOCUMENT_TYPE_LABELS["politica_interna"], "palette": "teal"},
+    "aditivo_contratual": {"label": DOCUMENT_TYPE_LABELS["aditivo_contratual"], "palette": "orange"},
+    "fora_escopo": {"label": DOCUMENT_TYPE_LABELS["fora_escopo"], "palette": "neutral"},
 }
 
 

@@ -170,6 +170,20 @@ class StorageServiceUserFilteringTests(unittest.TestCase):
 
         self.assertFalse(deleted)
 
+    def test_list_documents_for_indexing_rejects_non_admin(self):
+        """Regressão: ao contrário das demais funções deste módulo,
+        list_documents_for_indexing não filtrava por usuário nem checava o
+        perfil — dependia inteiramente da UI esconder o botão de quem não é
+        admin. Agora a checagem também existe na camada de serviço."""
+        with self.assertRaises(PermissionError):
+            storage_service.list_documents_for_indexing(ROLE_BASIC)
+
+    def test_list_documents_for_indexing_returns_everything_for_admin(self):
+        documents = storage_service.list_documents_for_indexing(ROLE_ADMIN)
+
+        file_names = {doc["file_name"] for doc in documents}
+        self.assertEqual(file_names, {"doc_do_usuario_basico.txt", "doc_do_outro_usuario.txt"})
+
 
 if __name__ == "__main__":
     unittest.main()

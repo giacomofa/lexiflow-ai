@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+import time
 from datetime import date
 from pathlib import Path
 
@@ -57,7 +58,19 @@ st.set_page_config(page_title="LexiFlow AI", page_icon="📄", layout="wide")
 
 inject_base_styles()
 
-init_db()
+
+@st.cache_resource
+def _init_db_once():
+    # st.cache_resource garante que isso rode uma vez por processo, não a
+    # cada rerun — Streamlit reexecuta o script inteiro a cada interação
+    # (clique, digitação, submit), e sem esse cache init_db() (criação de
+    # tabela, PRAGMA de colunas, contagens de backfill) rodaria de novo a
+    # cada uma dessas interações, para todo usuário conectado.
+    init_db()
+    return True
+
+
+_init_db_once()
 
 
 def render_login_page():
@@ -91,14 +104,46 @@ def render_login_page():
                     st.error("Usuário ou senha inválidos.")
 
 
+SESSION_REVALIDATION_INTERVAL_SECONDS = 300  # 5 minutos
+
+
+def _clear_session_state():
+    st.session_state.pop("user", None)
+    st.session_state.pop("session_token", None)
+    st.session_state.pop("session_checked_at", None)
+    st.query_params.clear()
+
+
 def _restore_session_from_query_params():
     """Sessão persistente: sem isso, dar refresh na página ou abrir em outra
     aba desloga o usuário, porque st.session_state é por conexão de
     navegador, não sobrevive a um reload. O token trafega em
     st.query_params (não num cookie httpOnly) — uma escolha deliberada para
     uma ferramenta interna, mitigada por TTL curto (ver auth_service.py,
-    SESSION_TTL_HOURS) e por o token em si não revelar nada."""
+    SESSION_TTL_HOURS) e por o token em si não revelar nada.
+
+    Streamlit reexecuta o script inteiro a cada interação, mas
+    st.session_state sobrevive a essas reexecuções dentro da mesma conexão
+    de navegador — sem revalidar periodicamente, uma sessão revogada (logout
+    em outro lugar, expiração do TTL, exclusão do usuário) continuaria sendo
+    aceita indefinidamente numa aba que já estava aberta. Por isso a sessão é
+    revalidada contra o banco não só na primeira carga, mas a cada
+    SESSION_REVALIDATION_INTERVAL_SECONDS, em vez de a cada rerun (que
+    pagaria uma consulta ao banco a cada clique)."""
     if "user" in st.session_state:
+        last_checked = st.session_state.get("session_checked_at", 0)
+        if time.time() - last_checked < SESSION_REVALIDATION_INTERVAL_SECONDS:
+            return
+
+        token = st.session_state.get("session_token")
+        with get_connection() as conn:
+            user = validate_session(conn, token)
+
+        if user:
+            st.session_state["user"] = user
+            st.session_state["session_checked_at"] = time.time()
+        else:
+            _clear_session_state()
         return
 
     token = st.query_params.get("session")
@@ -111,6 +156,7 @@ def _restore_session_from_query_params():
     if user:
         st.session_state["user"] = user
         st.session_state["session_token"] = token
+        st.session_state["session_checked_at"] = time.time()
     else:
         st.query_params.clear()
 
@@ -125,7 +171,7 @@ current_user = st.session_state["user"]
 
 
 def reindex_all_documents():
-    documents = list_documents_for_indexing()
+    documents = list_documents_for_indexing(current_user["role"])
 
     total_docs = len(documents)
     success_count = 0
@@ -167,7 +213,12 @@ def render_text(title: str, value, field_key: str = None, field_confidence: dict
         score = field_confidence[field_key]["score"]
         badge = f" {render_confidence_badge(score)}"
 
-    st.markdown(f"**{title}:** {value if value else 'Não identificado.'}{badge}", unsafe_allow_html=True)
+    # value vem do texto extraído pelo LLM a partir do documento enviado pelo
+    # usuário — precisa ser escapado antes de entrar em unsafe_allow_html=True,
+    # senão um documento com marcação HTML/JS embutida renderiza como HTML de
+    # verdade na tela de qualquer um que abrir essa análise.
+    safe_value = escape(str(value)) if value else "Não identificado."
+    st.markdown(f"**{title}:** {safe_value}{badge}", unsafe_allow_html=True)
 
 
 def render_yes_no(title: str, value):
@@ -587,11 +638,28 @@ def render_history_page():
 
         with confirm_col:
             if st.button("Confirmar exclusão permanente", key=f"confirm_delete_button_{selected_doc['id']}"):
-                delete_document(selected_doc["id"], current_user["id"], current_user["role"])
-                delete_document_chunks(selected_doc["id"])
-                st.session_state.pop(confirm_key, None)
-                st.success("Documento excluído.")
-                st.rerun()
+                try:
+                    deleted = delete_document(selected_doc["id"], current_user["id"], current_user["role"])
+                except Exception as e:
+                    st.error(f"Falha ao excluir o documento: {describe_error(e)}")
+                else:
+                    if not deleted:
+                        st.error(
+                            "Não foi possível excluir: o documento já não existe mais ou você não tem "
+                            "permissão para excluí-lo."
+                        )
+                    else:
+                        try:
+                            delete_document_chunks(selected_doc["id"])
+                        except Exception as e:
+                            st.warning(
+                                "Documento excluído, mas houve falha ao limpar o índice de busca "
+                                f"semântica: {describe_error(e)}"
+                            )
+                        else:
+                            st.success("Documento excluído.")
+                        st.session_state.pop(confirm_key, None)
+                        st.rerun()
 
         with cancel_col:
             if st.button("Cancelar", key=f"cancel_delete_button_{selected_doc['id']}"):
@@ -610,9 +678,7 @@ if st.sidebar.button("Sair", key="logout_button"):
     if token:
         with get_connection() as conn:
             delete_session(conn, token)
-    st.query_params.clear()
-    del st.session_state["user"]
-    st.session_state.pop("session_token", None)
+    _clear_session_state()
     st.rerun()
 
 st.sidebar.divider()

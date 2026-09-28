@@ -5,8 +5,11 @@ amigáveis para o usuário final, em vez de expor a exceção crua na tela.
 from __future__ import annotations
 
 import json
+import logging
 
 import openai
+
+logger = logging.getLogger("lexiflow.errors")
 
 
 def describe_error(exc: Exception) -> str:
@@ -55,4 +58,10 @@ def describe_error(exc: Exception) -> str:
     if isinstance(exc, ValueError):
         return str(exc)
 
-    return f"Ocorreu um erro inesperado ao processar o documento. Detalhe técnico: {exc}"
+    # Qualquer outro tipo de exceção não foi previsto acima — em vez de
+    # devolver a exceção crua ao usuário (que pode ser um perfil "basic" sem
+    # privilégio nenhum, e a mensagem pode conter caminho de arquivo, nome de
+    # tabela/coluna ou outro detalhe interno), registra o detalhe técnico no
+    # log do servidor e devolve uma mensagem genérica e segura para a tela.
+    logger.error("Erro não tratado ao processar documento/pergunta: %r", exc)
+    return "Ocorreu um erro inesperado ao processar o documento. Tente novamente ou contate o suporte."

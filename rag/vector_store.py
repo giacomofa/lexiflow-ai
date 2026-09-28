@@ -87,6 +87,15 @@ def index_document(document_id: int, file_name: str, document_text: str) -> int:
     collection = get_collection()
     chunks = chunk_document(document_text)
 
+    # Limpa qualquer chunk já indexado para este documento antes de inserir
+    # os novos. Sem isso, reprocessar/reindexar um documento cujo novo
+    # chunking gera MENOS pedaços que uma indexação anterior só sobrescreve
+    # os ids 0..len(chunks)-1 — os ids extras da vez anterior (ex.: chunk_9,
+    # chunk_10 de uma indexação com 11 pedaços, se a nova gerar só 7) ficam
+    # órfãos na coleção, com texto desatualizado, ainda retornados pelas
+    # buscas semânticas para esse document_id.
+    collection.delete(where={"document_id": document_id})
+
     if not chunks:
         return 0
 

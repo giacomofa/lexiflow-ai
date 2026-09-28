@@ -224,7 +224,17 @@ def delete_document(document_id: int, user_id: int, role: str) -> bool:
         return cursor.rowcount > 0
 
 
-def list_documents_for_indexing():
+def list_documents_for_indexing(role: str):
+    """Lista todos os documentos (de todos os usuários) para reindexação —
+    ao contrário das demais funções deste módulo, não filtra por dono,
+    porque a reindexação em massa é uma operação administrativa que precisa
+    tocar todo o acervo. Por isso a checagem de perfil é feita aqui, na
+    camada de serviço, e não só na UI (que hoje já esconde o botão
+    correspondente de usuários não-admin, mas essa checagem não deveria
+    depender só disso)."""
+    if role != ROLE_ADMIN:
+        raise PermissionError("Apenas administradores podem listar documentos para reindexação.")
+
     with get_connection() as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
